@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const EMAIL = "superadmin@vetan.app";
-const PASSWORD = "Demo@12345";
+const PASSWORD = "Super@98765";
 
 const prisma = new PrismaClient();
 
