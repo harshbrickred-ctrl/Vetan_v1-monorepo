@@ -1,4 +1,5 @@
 import { useAuthStore } from "@/lib/auth/auth-store";
+import { usePlatformAuthStore } from "@/lib/platform/auth-store";
 
 export class ApiError extends Error {
   constructor(
@@ -61,8 +62,15 @@ function pathWithoutQuery(p: string): string {
   return i === -1 ? withSlash : withSlash.slice(0, i);
 }
 
+function isPlatformApiPath(path: string): boolean {
+  return pathWithoutQuery(path).startsWith("/v1/platform/");
+}
+
 function shouldTryRefreshOn401(path: string): boolean {
-  return !AUTH_PATHS_NO_REFRESH.has(pathWithoutQuery(path));
+  const p = pathWithoutQuery(path);
+  // Platform admin uses a Bearer token only — no tenant refresh cookie.
+  if (isPlatformApiPath(p)) return false;
+  return !AUTH_PATHS_NO_REFRESH.has(p);
 }
 
 async function fetchNewAccessTokenFromRefreshCookie(): Promise<string | null> {
@@ -130,18 +138,20 @@ export async function apiFetchJson<T>(
     /* empty body */
   }
 
-  if (
-    res.status === 401 &&
-    !_authRetried &&
-    shouldTryRefreshOn401(path) &&
-    typeof window !== "undefined"
-  ) {
-    const next = await refreshAccessTokenSingleFlight();
-    if (next) {
-      useAuthStore.getState().setToken(next);
-      return apiFetchJson<T>(path, { ...init, token: next, _authRetried: true });
+  if (res.status === 401 && typeof window !== "undefined") {
+    if (isPlatformApiPath(path)) {
+      usePlatformAuthStore.getState().clearAuth();
+    } else if (
+      !_authRetried &&
+      shouldTryRefreshOn401(path)
+    ) {
+      const next = await refreshAccessTokenSingleFlight();
+      if (next) {
+        useAuthStore.getState().setToken(next);
+        return apiFetchJson<T>(path, { ...init, token: next, _authRetried: true });
+      }
+      useAuthStore.getState().clearAuth();
     }
-    useAuthStore.getState().clearAuth();
   }
 
   if (!res.ok) {
