@@ -14,6 +14,8 @@ export const Permission = {
   "attendance:write": "attendance:write",
   "tasks:read": "tasks:read",
   "tasks:write": "tasks:write",
+  "id-cards:read": "id-cards:read",
+  "id-cards:write": "id-cards:write",
 } as const;
 
 export type PermissionKey = (typeof Permission)[keyof typeof Permission];

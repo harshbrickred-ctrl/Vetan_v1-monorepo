@@ -7,6 +7,7 @@ import {
   ClipboardList,
   CreditCard,
   FileBarChart,
+  IdCard,
   KeyRound,
   LayoutDashboard,
   Leaf,
@@ -27,6 +28,8 @@ import { VetanLogo } from "@/components/vetan-logo";
 import { Permission } from "@/lib/auth/permissions";
 import { useAuthStore } from "@/lib/auth/auth-store";
 import { logout } from "@/lib/auth/auth-service";
+import { fetchIdCardPortalLaunchUrl } from "@/lib/api/id-card-portal";
+import { ApiError } from "@/lib/api/client";
 import { usePermissions } from "@/lib/hooks/use-permissions";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { cn } from "@/lib/utils";
@@ -73,8 +76,44 @@ const finances: NavItem[] = [
 const settings: NavItem[] = [
   { href: "/settings/workspace", label: "Workspace", icon: Settings, perm: Permission["settings:read"] },
   { href: "/settings/appearance", label: "Appearance", icon: Palette, perm: Permission["settings:read"] },
+  {
+    href: "/settings/integrations",
+    label: "Integrations",
+    icon: KeyRound,
+    perm: Permission["id-cards:read"],
+  },
   { href: "/audit-logs", label: "Audit logs", icon: ScrollText, perm: Permission["settings:read"] },
 ];
+
+function IdCardPortalLink({ collapsed }: { collapsed: boolean }) {
+  const { hasPermission } = usePermissions();
+  if (!hasPermission(Permission["id-cards:read"])) return null;
+
+  return (
+    <button
+      type="button"
+      title={collapsed ? "ID Cards" : undefined}
+      onClick={() => {
+        void (async () => {
+          try {
+            const url = await fetchIdCardPortalLaunchUrl();
+            window.open(url, "_blank", "noopener,noreferrer");
+          } catch (e) {
+            const msg = e instanceof ApiError ? e.message : "Could not open ID Card Portal";
+            window.alert(msg);
+          }
+        })();
+      }}
+      className={cn(
+        "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-[color-mix(in_srgb,var(--brand-500)_6%,transparent)] hover:text-foreground",
+        collapsed && "justify-center px-0",
+      )}
+    >
+      <IdCard className="size-[18px] shrink-0 text-[var(--brand-400)]" aria-hidden />
+      {!collapsed ? <span>ID Cards</span> : null}
+    </button>
+  );
+}
 
 function NavSection({
   title,
@@ -181,6 +220,9 @@ export function Sidebar({ className }: { className?: string }) {
 
       <nav className="flex-1 overflow-y-auto">
         <NavSection title="Main" items={main} collapsed={sidebarCollapsed} />
+        <div className="mb-6 px-0">
+          <IdCardPortalLink collapsed={sidebarCollapsed} />
+        </div>
         <NavSection title="Finances" items={finances} collapsed={sidebarCollapsed} />
         <NavSection title="Settings" items={settings} collapsed={sidebarCollapsed} />
       </nav>

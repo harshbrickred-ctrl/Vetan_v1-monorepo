@@ -18,6 +18,8 @@ const PERMISSION_CODES = [
   'attendance:write',
   'tasks:read',
   'tasks:write',
+  'id-cards:read',
+  'id-cards:write',
 ] as const;
 
 async function main() {

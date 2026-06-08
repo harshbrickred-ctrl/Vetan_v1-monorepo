@@ -113,6 +113,17 @@ const AppearanceSettingsSchema = z.object({
   adminTheme: z.enum(ADMIN_THEME_IDS).optional(),
 });
 
+const IdCardPortalIntegrationSchema = z.object({
+  apiKeyHash: z.string().optional(),
+  apiKeyPrefix: z.string().optional(),
+  createdAt: z.string().optional(),
+  createdByUserId: z.string().optional(),
+});
+
+const IntegrationsSettingsSchema = z.object({
+  idCardPortal: IdCardPortalIntegrationSchema.optional(),
+});
+
 export const PatchTenantSettingsSchema = z.object({
   companyProfile: CompanyProfileSettingsSchema.optional(),
   statutoryCompliance: StatutoryComplianceSettingsSchema.optional(),
@@ -122,6 +133,7 @@ export const PatchTenantSettingsSchema = z.object({
   bankingDisbursement: BankingDisbursementSettingsSchema.optional(),
   notifications: NotificationSettingsSchema.optional(),
   appearance: AppearanceSettingsSchema.optional(),
+  integrations: IntegrationsSettingsSchema.optional(),
 });
 export type PatchTenantSettingsDto = z.infer<typeof PatchTenantSettingsSchema>;
 
