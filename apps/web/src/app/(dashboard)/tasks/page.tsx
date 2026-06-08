@@ -172,7 +172,13 @@ export default function TasksPage() {
 
   const employeesQuery = useQuery({
     queryKey: ["employees", "tasks-assign", token],
-    queryFn: () => fetchEmployees(token!, { page: 1, pageSize: 200, status: "ACTIVE" }),
+    queryFn: () =>
+      fetchEmployees(token!, {
+        page: 1,
+        pageSize: 100,
+        record: "active",
+        status: "ACTIVE",
+      }),
     enabled: !!token && assignOpen,
   });
 
@@ -392,15 +398,29 @@ export default function TasksPage() {
                 value={assigneeId}
                 onChange={(e) => setAssigneeId(e.target.value)}
                 required
+                disabled={employeesQuery.isLoading || employeesQuery.isError}
                 className="mt-1 h-9 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm"
               >
-                <option value="">Select employee…</option>
+                <option value="">
+                  {employeesQuery.isLoading
+                    ? "Loading employees…"
+                    : employeesQuery.isError
+                      ? "Could not load employees"
+                      : "Select employee…"}
+                </option>
                 {(employeesQuery.data?.items ?? []).map((emp) => (
                   <option key={emp.id} value={emp.id}>
                     {emp.firstName} {emp.lastName} ({emp.employeeCode})
                   </option>
                 ))}
               </select>
+              {employeesQuery.isError ? (
+                <p className="mt-1 text-xs text-destructive">
+                  {employeesQuery.error instanceof ApiError
+                    ? employeesQuery.error.message
+                    : "Failed to load employee list."}
+                </p>
+              ) : null}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

@@ -104,8 +104,8 @@ const ADMIN_THEME_IDS = [
   "light",
   "dark",
   "ocean",
-  "cocoa",
-  "sage",
+  "lilac",
+  "azalea",
   "nature",
 ] as const;
 

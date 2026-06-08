@@ -128,7 +128,8 @@ export default function AttendancePage() {
 
   const employeesQuery = useQuery({
     queryKey: ["employees", "attendance-filter", token],
-    queryFn: () => fetchEmployees(token!, { page: 1, pageSize: 200, status: "ACTIVE" }),
+    queryFn: () =>
+      fetchEmployees(token!, { page: 1, pageSize: 100, record: "active", status: "ACTIVE" }),
     enabled: !!token,
   });
 

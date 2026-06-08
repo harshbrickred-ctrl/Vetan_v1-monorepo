@@ -53,13 +53,19 @@ const main: NavItem[] = [
     icon: KeyRound,
     perm: Permission["settings:read"],
   },
-  { href: "/billing", label: "Billing", icon: CreditCard, perm: Permission["billing:read"] },
+  {
+    href: "/settings/holidays",
+    label: "Holiday calendar",
+    icon: CalendarDays,
+    perm: Permission["settings:read"],
+  },
   { href: "/attendance", label: "Attendance", icon: CalendarDays, perm: Permission["attendance:read"] },
   { href: "/leave", label: "Leave", icon: Leaf, perm: Permission["leave:read"] },
   { href: "/tasks", label: "Tasks", icon: CheckSquare, perm: Permission["tasks:read"] },
 ];
 
 const finances: NavItem[] = [
+  { href: "/billing", label: "Billing", icon: CreditCard, perm: Permission["billing:read"] },
   { href: "/payroll", label: "Payroll", icon: ClipboardList, perm: Permission["payroll:read"] },
   { href: "/reports", label: "Reports", icon: FileBarChart, perm: Permission["reports:read"] },
 ];
@@ -67,7 +73,6 @@ const finances: NavItem[] = [
 const settings: NavItem[] = [
   { href: "/settings/workspace", label: "Workspace", icon: Settings, perm: Permission["settings:read"] },
   { href: "/settings/appearance", label: "Appearance", icon: Palette, perm: Permission["settings:read"] },
-  { href: "/settings/holidays", label: "Holiday calendar", icon: CalendarDays, perm: Permission["settings:read"] },
   { href: "/audit-logs", label: "Audit logs", icon: ScrollText, perm: Permission["settings:read"] },
 ];
 
