@@ -3,6 +3,7 @@
 import {
   Building2,
   CalendarDays,
+  CheckSquare,
   ClipboardList,
   CreditCard,
   FileBarChart,
@@ -13,6 +14,7 @@ import {
   Network,
   PanelLeftClose,
   PanelLeftOpen,
+  Palette,
   ScrollText,
   Settings,
   Users,
@@ -54,6 +56,7 @@ const main: NavItem[] = [
   { href: "/billing", label: "Billing", icon: CreditCard, perm: Permission["billing:read"] },
   { href: "/attendance", label: "Attendance", icon: CalendarDays, perm: Permission["attendance:read"] },
   { href: "/leave", label: "Leave", icon: Leaf, perm: Permission["leave:read"] },
+  { href: "/tasks", label: "Tasks", icon: CheckSquare, perm: Permission["tasks:read"] },
 ];
 
 const finances: NavItem[] = [
@@ -63,6 +66,7 @@ const finances: NavItem[] = [
 
 const settings: NavItem[] = [
   { href: "/settings/workspace", label: "Workspace", icon: Settings, perm: Permission["settings:read"] },
+  { href: "/settings/appearance", label: "Appearance", icon: Palette, perm: Permission["settings:read"] },
   { href: "/settings/holidays", label: "Holiday calendar", icon: CalendarDays, perm: Permission["settings:read"] },
   { href: "/audit-logs", label: "Audit logs", icon: ScrollText, perm: Permission["settings:read"] },
 ];

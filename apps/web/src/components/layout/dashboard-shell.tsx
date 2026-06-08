@@ -14,6 +14,7 @@ import { useEffect } from "react";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
+import { AdminThemeSync } from "@/components/theme/admin-theme-sync";
 import { cn } from "@/lib/utils";
 import { useUiStore } from "@/lib/stores/ui-store";
 
@@ -73,6 +74,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative min-h-screen">
+      <AdminThemeSync />
       {mobileNavOpen ? (
         <button
           type="button"

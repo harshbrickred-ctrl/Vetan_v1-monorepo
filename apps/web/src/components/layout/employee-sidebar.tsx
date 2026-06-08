@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   CalendarDays,
+  CheckSquare,
   ChevronDown,
   Clock,
   FileStack,
@@ -55,6 +56,12 @@ const GROUPS: NavGroup[] = [
     label: "Attendance",
     icon: Clock,
     items: [{ href: "/employee/attendance", label: "Attendance info" }],
+  },
+  {
+    id: "tasks",
+    label: "Tasks",
+    icon: CheckSquare,
+    items: [{ href: "/employee/tasks", label: "My tasks" }],
   },
 ];
 

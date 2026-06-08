@@ -17,6 +17,7 @@ export * as Tenant from "./tenant";
 export * as Employees from "./employees";
 export * as Payroll from "./payroll";
 export * as Leave from "./leave";
+export * as Tasks from "./tasks";
 export * as Attendance from "./attendance";
 export * as Reports from "./reports";
 export * as Billing from "./billing";

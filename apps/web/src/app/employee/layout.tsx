@@ -1,10 +1,12 @@
 import { EmployeeAuthGuard } from "@/components/layout/employee-auth-guard";
+import { EmployeeThemeProvider } from "@/components/theme/employee-theme-provider";
 import { EmployeeBottomNav } from "@/components/layout/employee-bottom-nav";
 import { EmployeeSidebar } from "@/components/layout/employee-sidebar";
 import { EmployeeTopNav } from "@/components/layout/employee-top-nav";
 
 export default function EmployeeLayout({ children }: { children: React.ReactNode }) {
   return (
+    <EmployeeThemeProvider>
     <EmployeeAuthGuard>
       <div className="flex min-h-screen flex-col bg-background md:flex-row">
         <EmployeeSidebar />
@@ -17,5 +19,6 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
         </div>
       </div>
     </EmployeeAuthGuard>
+    </EmployeeThemeProvider>
   );
 }

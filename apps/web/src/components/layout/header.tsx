@@ -1,11 +1,11 @@
 "use client";
 
-import { Search } from "lucide-react";
+import Link from "next/link";
+import { Palette, Search } from "lucide-react";
 
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { NotificationMenu } from "@/components/layout/notification-menu";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { useCommandPaletteStore } from "@/lib/stores/command-palette-store";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { cn } from "@/lib/utils";
@@ -58,7 +58,17 @@ export function Header({ className }: { className?: string }) {
       </div>
 
       <div className="flex items-center gap-2">
-        <ThemeToggle />
+        <Link
+          href="/settings/appearance"
+          aria-label="Appearance settings"
+          className={buttonVariants({
+            variant: "ghost",
+            size: "icon",
+            className: "glass-2 border border-border",
+          })}
+        >
+          <Palette className="size-4" />
+        </Link>
         <NotificationMenu />
       </div>
     </header>

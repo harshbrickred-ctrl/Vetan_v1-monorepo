@@ -20,6 +20,8 @@ export const PERMISSION_CODES = [
   "billing:read",
   "attendance:read",
   "attendance:write",
+  "tasks:read",
+  "tasks:write",
 ] as const;
 
 export type PermissionCode = (typeof PERMISSION_CODES)[number];

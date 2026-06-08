@@ -16,18 +16,38 @@ const PERMISSION_CODES = [
   'billing:read',
   'attendance:read',
   'attendance:write',
+  'tasks:read',
+  'tasks:write',
 ] as const;
 
 async function main() {
+  const permissions = [];
   for (const code of PERMISSION_CODES) {
-    await prisma.permission.upsert({
+    const row = await prisma.permission.upsert({
       where: { code },
       create: { code, description: code },
       update: {},
     });
+    permissions.push(row);
   }
+
+  const adminRoles = await prisma.role.findMany({ where: { name: 'ADMIN' } });
+  for (const role of adminRoles) {
+    for (const perm of permissions) {
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: { roleId: role.id, permissionId: perm.id },
+        },
+        create: { roleId: role.id, permissionId: perm.id },
+        update: {},
+      });
+    }
+  }
+
   // eslint-disable-next-line no-console
-  console.log(`Seeded ${PERMISSION_CODES.length} permissions.`);
+  console.log(
+    `Seeded ${PERMISSION_CODES.length} permissions; synced ${adminRoles.length} ADMIN role(s).`,
+  );
 }
 
 main()

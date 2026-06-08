@@ -1,4 +1,5 @@
 import { ApiError, apiFetchJson, getApiBaseUrl, pickErrorMessage } from "./client";
+import type { TaskRow } from "./tasks";
 
 export type MeDashboard = {
   latestPayslip: {
@@ -272,4 +273,20 @@ export async function fetchMeAttendanceSummary(token: string, from: string, to: 
     `/v1/me/attendance/summary?from=${from}&to=${to}`,
     { method: "GET", token }
   );
+}
+
+export async function fetchMeTasks(token: string) {
+  return apiFetchJson<TaskRow[]>("/v1/me/tasks", { method: "GET", token });
+}
+
+export async function patchMeTaskStatus(
+  token: string,
+  taskId: string,
+  status: "ACCEPTED" | "WORKING" | "DONE",
+) {
+  return apiFetchJson<TaskRow>(`/v1/me/tasks/${taskId}/status`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify({ status }),
+  });
 }

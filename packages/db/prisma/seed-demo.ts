@@ -31,6 +31,8 @@ const PERMISSION_CODES = [
   'billing:read',
   'attendance:read',
   'attendance:write',
+  'tasks:read',
+  'tasks:write',
 ] as const;
 
 async function ensurePermissions() {

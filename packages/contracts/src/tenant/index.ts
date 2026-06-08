@@ -100,6 +100,19 @@ const NotificationSettingsSchema = z.object({
   leaveNotifications: z.boolean().optional(),
 });
 
+const ADMIN_THEME_IDS = [
+  "light",
+  "dark",
+  "ocean",
+  "cocoa",
+  "sage",
+  "nature",
+] as const;
+
+const AppearanceSettingsSchema = z.object({
+  adminTheme: z.enum(ADMIN_THEME_IDS).optional(),
+});
+
 export const PatchTenantSettingsSchema = z.object({
   companyProfile: CompanyProfileSettingsSchema.optional(),
   statutoryCompliance: StatutoryComplianceSettingsSchema.optional(),
@@ -108,6 +121,7 @@ export const PatchTenantSettingsSchema = z.object({
   saasTenant: SaasTenantSettingsSchema.optional(),
   bankingDisbursement: BankingDisbursementSettingsSchema.optional(),
   notifications: NotificationSettingsSchema.optional(),
+  appearance: AppearanceSettingsSchema.optional(),
 });
 export type PatchTenantSettingsDto = z.infer<typeof PatchTenantSettingsSchema>;
 
