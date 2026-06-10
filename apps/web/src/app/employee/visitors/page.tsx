@@ -2,9 +2,10 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Search, UserCheck } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
+import { VisitorPhotoThumb } from "@/components/visitors/visitor-photo-thumb";
 import { VisitorRegisterForm } from "@/components/visitors/visitor-register-form";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,6 @@ import { ApiError } from "@/lib/api/client";
 import {
   fetchMeVisitorHosts,
   fetchMeVisitors,
-  loadVisitorPhotoBlob,
   registerMeVisitor,
   type VisitorRow,
 } from "@/lib/api/visitors";
@@ -28,35 +28,12 @@ function formatVisitTime(iso: string): string {
   });
 }
 
-function VisitorPhotoThumb({ visitorId, token }: { visitorId: string; token: string }) {
-  const [src, setSrc] = useState<string | null>(null);
-
-  useEffect(() => {
-    let url: string | null = null;
-    let cancelled = false;
-    void loadVisitorPhotoBlob(token, visitorId, true).then((u) => {
-      if (!cancelled) {
-        url = u;
-        setSrc(u);
-      }
-    });
-    return () => {
-      cancelled = true;
-      if (url) URL.revokeObjectURL(url);
-    };
-  }, [visitorId, token]);
-
-  if (!src) {
-    return <div className="size-12 shrink-0 rounded-md bg-muted" />;
-  }
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt="" className="size-12 shrink-0 rounded-md object-cover" />;
-}
-
 function VisitorListItem({ row, token }: { row: VisitorRow; token: string }) {
   return (
     <div className="flex gap-3 border-b border-border/60 px-4 py-3 last:border-0">
-      {row.hasPhoto ? <VisitorPhotoThumb visitorId={row.id} token={token} /> : null}
+      {row.hasPhoto ? (
+        <VisitorPhotoThumb visitorId={row.id} token={token} me className="size-12" />
+      ) : null}
       <div className="min-w-0 flex-1">
         <p className="font-medium">{row.name}</p>
         <p className="text-xs text-muted-foreground">{row.phone}</p>

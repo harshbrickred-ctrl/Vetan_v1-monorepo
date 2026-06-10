@@ -168,8 +168,17 @@ export async function loadVisitorPhotoBlob(
     credentials: "include",
   });
   if (!res.ok) {
-    throw new ApiError("Could not load photo", res.status, null);
+    let json: Record<string, unknown> = {};
+    try {
+      json = (await res.json()) as Record<string, unknown>;
+    } catch {
+      /* binary */
+    }
+    throw new ApiError(pickErrorMessage(json, "Could not load photo"), res.status, json);
   }
   const blob = await res.blob();
+  if (!blob.size) {
+    throw new ApiError("Photo is empty", res.status, null);
+  }
   return URL.createObjectURL(blob);
 }

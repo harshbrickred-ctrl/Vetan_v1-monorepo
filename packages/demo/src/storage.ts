@@ -38,9 +38,16 @@ export type UploadResult = {
   sizeBytes: number;
 };
 
+export type StorageDownloadResult = {
+  url: string;
+  mimeType: string;
+  fileName: string;
+  dataBase64?: string | null;
+};
+
 export interface StorageProvider {
   upload(input: UploadInput): Promise<UploadResult>;
-  download(id: string): Promise<{ url: string; mimeType: string; fileName: string }>;
+  download(id: string): Promise<StorageDownloadResult>;
   remove(id: string): Promise<void>;
 }
 
@@ -66,6 +73,7 @@ function sampleUrlFor(kind: string, mimeType: string): string {
 const mockProvider: StorageProvider = {
   async upload(input) {
     const url = sampleUrlFor(input.kind, input.mimeType);
+    const dataBase64 = Buffer.from(input.bytes).toString("base64");
     const row = await prisma.mockUpload.create({
       data: {
         tenantId: input.tenantId ?? null,
@@ -76,6 +84,7 @@ const mockProvider: StorageProvider = {
         sizeBytes: input.sizeBytes,
         storage: "mock",
         url,
+        dataBase64,
         uploadedBy: input.uploadedBy ?? null,
       },
     });
@@ -92,7 +101,12 @@ const mockProvider: StorageProvider = {
   async download(id) {
     const row = await prisma.mockUpload.findUnique({ where: { id } });
     if (!row) throw new Error("Upload not found");
-    return { url: row.url, mimeType: row.mimeType, fileName: row.fileName };
+    return {
+      url: row.url,
+      mimeType: row.mimeType,
+      fileName: row.fileName,
+      dataBase64: row.dataBase64,
+    };
   },
 
   async remove(id) {

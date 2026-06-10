@@ -226,9 +226,10 @@ export async function createVisitor(
 }
 
 export type PhotoDownloadResolution = {
-  url: string;
   mimeType: string;
   fileName: string;
+  bytes?: Buffer;
+  redirectUrl?: string;
 };
 
 export async function resolvePhotoDownload(
@@ -242,9 +243,20 @@ export async function resolvePhotoDownload(
     throw new NotFoundError("Visitor photo not found");
   }
   const meta = await storage.download(row.photoStoredFilename);
+  const mimeType = row.photoMimeType ?? meta.mimeType;
+  const fileName = row.photoOriginalFilename ?? meta.fileName;
+
+  if (meta.dataBase64) {
+    return {
+      mimeType,
+      fileName,
+      bytes: Buffer.from(meta.dataBase64, "base64"),
+    };
+  }
+
   return {
-    url: meta.url,
-    mimeType: row.photoMimeType ?? meta.mimeType,
-    fileName: row.photoOriginalFilename ?? meta.fileName,
+    mimeType,
+    fileName,
+    redirectUrl: meta.url,
   };
 }

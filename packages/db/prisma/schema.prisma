@@ -787,6 +787,8 @@ model MockUpload {
   storage    String   @default("mock")
   /// In demo mode points to /samples/sample-document.pdf etc.
   url        String
+  /// Base64 payload for demo-mode uploads where bytes cannot live on disk.
+  dataBase64 String?  @db.Text
   uploadedBy String?
   createdAt  DateTime @default(now())
 

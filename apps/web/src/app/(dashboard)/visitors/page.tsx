@@ -2,13 +2,14 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Search, UserRound } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
+import { VisitorPhotoThumb } from "@/components/visitors/visitor-photo-thumb";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { fetchEmployees } from "@/lib/api/employees";
-import { fetchVisitors, loadVisitorPhotoBlob, type VisitorRow } from "@/lib/api/visitors";
+import { fetchVisitors, type VisitorRow } from "@/lib/api/visitors";
 import { useAuthStore } from "@/lib/auth/auth-store";
 
 function formatVisitTime(iso: string): string {
@@ -19,31 +20,6 @@ function formatVisitTime(iso: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
-}
-
-function VisitorPhotoThumb({ visitorId, token }: { visitorId: string; token: string }) {
-  const [src, setSrc] = useState<string | null>(null);
-
-  useEffect(() => {
-    let url: string | null = null;
-    let cancelled = false;
-    void loadVisitorPhotoBlob(token, visitorId).then((u) => {
-      if (!cancelled) {
-        url = u;
-        setSrc(u);
-      }
-    });
-    return () => {
-      cancelled = true;
-      if (url) URL.revokeObjectURL(url);
-    };
-  }, [visitorId, token]);
-
-  if (!src) {
-    return <div className="size-10 rounded-md bg-muted" />;
-  }
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt="" className="size-10 rounded-md object-cover" />;
 }
 
 export default function VisitorsPage() {
@@ -193,7 +169,7 @@ export default function VisitorsPage() {
                   <tr key={r.id} className="border-b border-border/60">
                     <td className="px-4 py-3">
                       {r.hasPhoto && token ? (
-                        <VisitorPhotoThumb visitorId={r.id} token={token} />
+                        <VisitorPhotoThumb visitorId={r.id} token={token} className="size-10" />
                       ) : (
                         "—"
                       )}

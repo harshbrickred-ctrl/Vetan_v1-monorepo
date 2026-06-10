@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
 import { parseUuidParam, withApi } from "@sangam/api-kit";
 import { getLinkedEmployee } from "@/server/employee-portal/linked-employee";
+import { visitorPhotoResponse } from "@/server/visitors/visitor-photo-response";
 import * as visitorService from "@/server/visitors/visitor-service";
 
 export const runtime = "nodejs";
@@ -13,11 +13,5 @@ export const GET = withApi(async (req, { params }: Ctx) => {
   const { id } = await params;
   const visitorId = parseUuidParam(id, "id");
   const meta = await visitorService.resolvePhotoDownload(emp.tenantId, visitorId);
-
-  return NextResponse.redirect(new URL(meta.url, req.url), {
-    status: 302,
-    headers: {
-      "Content-Disposition": `inline; filename="${encodeURIComponent(meta.fileName)}"`,
-    },
-  });
+  return visitorPhotoResponse(req, meta);
 });
