@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "cd ../.. && npm run build -- --filter=@sangam/web",
+  "buildCommand": "cd ../.. && npm run db:migrate && npm run build -- --filter=@sangam/web",
   "installCommand": "cd ../.. && npm install --workspaces --include-workspace-root",
   "framework": "nextjs",
   "regions": ["bom1"],

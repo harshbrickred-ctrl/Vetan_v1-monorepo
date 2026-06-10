@@ -85,6 +85,24 @@ function extOf(name: string): string {
   return name.slice(i).toLowerCase();
 }
 
+function normalizePhoto(photo: UploadPhotoInput): UploadPhotoInput {
+  let mimeType = photo.mimeType.trim().toLowerCase();
+  if (!mimeType || mimeType === "image/jpg") mimeType = "image/jpeg";
+
+  let fileName = photo.fileName.trim();
+  if (!fileName || !extOf(fileName)) {
+    const ext =
+      mimeType === "image/png"
+        ? ".png"
+        : mimeType === "image/webp"
+          ? ".webp"
+          : ".jpg";
+    fileName = `visitor-photo${ext}`;
+  }
+
+  return { ...photo, mimeType, fileName };
+}
+
 async function assertHostEmployee(tenantId: string, employeeId: string) {
   const emp = await prisma.employee.findFirst({
     where: { id: employeeId, tenantId, deletedAt: null, status: "ACTIVE" },
@@ -157,23 +175,26 @@ export async function createVisitor(
   if (!photo || !photo.bytes.length) {
     throw new BadRequestError("Visitor photo is required");
   }
-  if (photo.sizeBytes > MAX_PHOTO_BYTES) {
+
+  const normalized = normalizePhoto(photo);
+  if (normalized.sizeBytes > MAX_PHOTO_BYTES) {
     throw new BadRequestError("Photo too large (max 8 MB)");
   }
-  if (!ALLOWED_PHOTO_MIMES.has(photo.mimeType)) {
+  if (!ALLOWED_PHOTO_MIMES.has(normalized.mimeType)) {
     throw new BadRequestError("Photo must be JPEG, PNG, or WebP");
   }
-  const ext = extOf(photo.fileName);
+  const ext = extOf(normalized.fileName);
   if (!ALLOWED_PHOTO_EXT.has(ext)) {
     throw new BadRequestError("Invalid photo extension");
   }
 
-  const safeOriginal = photo.fileName.replace(/[^\w.\-()+ ]/g, "_") || "visitor-photo.jpg";
+  const safeOriginal =
+    normalized.fileName.replace(/[^\w.\-()+ ]/g, "_") || "visitor-photo.jpg";
   const uploaded = await storage.upload({
-    bytes: photo.bytes,
+    bytes: normalized.bytes,
     fileName: safeOriginal,
-    mimeType: photo.mimeType,
-    sizeBytes: photo.sizeBytes,
+    mimeType: normalized.mimeType,
+    sizeBytes: normalized.sizeBytes,
     tenantId,
     kind: "visitor-photos",
     ownerRef: registeredByEmployeeId,
@@ -190,8 +211,8 @@ export async function createVisitor(
         visitToEmployeeId,
         visitedAt: parseVisitedAt(fields.visitedAt),
         photoStoredFilename: uploaded.id,
-        photoMimeType: photo.mimeType,
-        photoSizeBytes: photo.sizeBytes,
+        photoMimeType: normalized.mimeType,
+        photoSizeBytes: normalized.sizeBytes,
         photoOriginalFilename: safeOriginal.slice(0, 255),
         registeredByEmployeeId,
       },
