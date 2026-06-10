@@ -25,3 +25,4 @@ export * as Notifications from "./notifications";
 export * as Audit from "./audit";
 export * as EmployeePortal from "./employee-portal";
 export * as Platform from "./platform";
+export * as Visitors from "./visitors";

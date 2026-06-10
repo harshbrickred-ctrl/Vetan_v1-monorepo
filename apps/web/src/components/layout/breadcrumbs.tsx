@@ -15,6 +15,7 @@ const labels: Record<string, string> = {
   payroll: "Payroll",
   run: "Run",
   attendance: "Attendance",
+  visitors: "Visitors",
   leave: "Leave",
   reports: "Reports",
   settings: "Settings",

@@ -52,6 +52,8 @@ function sampleUrlFor(kind: string, mimeType: string): string {
       return "/samples/sample-legal-document.pdf";
     case "employee-docs":
       return "/samples/sample-employee-document.pdf";
+    case "visitor-photos":
+      return "/samples/sample-image.png";
     case "payslips":
       return "/samples/sample-payslip.pdf";
     case "invoices":

@@ -11,6 +11,7 @@ import {
   IndianRupee,
   LogOut,
   Settings,
+  UserCheck,
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -62,6 +63,12 @@ const GROUPS: NavGroup[] = [
     label: "Tasks",
     icon: CheckSquare,
     items: [{ href: "/employee/tasks", label: "My tasks" }],
+  },
+  {
+    id: "visitors",
+    label: "Visitors",
+    icon: UserCheck,
+    items: [{ href: "/employee/visitors", label: "Register visitor" }],
   },
 ];
 

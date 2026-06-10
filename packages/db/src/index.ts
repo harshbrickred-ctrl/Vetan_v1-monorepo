@@ -85,6 +85,7 @@ export type {
   LeaveBalance,
   LeaveRequest,
   Task,
+  VisitorRecord,
   PayrollRun,
   PayrollEntry,
   Payslip,

@@ -172,6 +172,7 @@ model Tenant {
   leaveRequests          LeaveRequest[]
   attendanceRecords      AttendanceRecord[]
   tasks                  Task[]
+  visitorRecords         VisitorRecord[]
   auditLogs              AuditLog[]
   notifications          Notification[]
   subscriptions          Subscription[]
@@ -378,6 +379,8 @@ model Employee {
   leaveBalances     LeaveBalance[]
   leaveRequests     LeaveRequest[]
   assignedTasks     Task[]
+  visitorsToMeet    VisitorRecord[] @relation("VisitorHost")
+  visitorsRegistered VisitorRecord[] @relation("VisitorRegisteredBy")
   payrollEntries    PayrollEntry[]
   payslips          Payslip[]
   onboardingDocuments EmployeeOnboardingDocument[]
@@ -575,6 +578,30 @@ model Task {
 
   @@index([tenantId, status])
   @@index([tenantId, assigneeId])
+}
+
+model VisitorRecord {
+  id                    String    @id @default(uuid())
+  tenantId              String
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name                  String
+  phone                 String
+  purpose               String
+  visitToName           String
+  visitToEmployeeId     String?
+  visitToEmployee       Employee? @relation("VisitorHost", fields: [visitToEmployeeId], references: [id], onDelete: SetNull)
+  visitedAt             DateTime
+  photoStoredFilename   String?
+  photoMimeType         String?
+  photoSizeBytes        Int?
+  photoOriginalFilename String?
+  registeredByEmployeeId String
+  registeredBy          Employee  @relation("VisitorRegisteredBy", fields: [registeredByEmployeeId], references: [id], onDelete: Cascade)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([tenantId, visitedAt])
+  @@index([tenantId, visitToEmployeeId])
 }
 
 // ─── Payroll ────────────────────────────────────────

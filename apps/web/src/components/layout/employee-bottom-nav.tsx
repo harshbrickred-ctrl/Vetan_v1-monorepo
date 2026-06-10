@@ -2,7 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, CheckSquare, ClipboardList, Clock, FileStack, Home, User } from "lucide-react";
+import {
+  CalendarDays,
+  CheckSquare,
+  ClipboardList,
+  Clock,
+  FileStack,
+  Home,
+  User,
+  UserCheck,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -13,6 +22,7 @@ const tabs = [
   { href: "/employee/leave", label: "Leave", icon: CalendarDays },
   { href: "/employee/attendance", label: "Attendance", icon: Clock },
   { href: "/employee/tasks", label: "Tasks", icon: CheckSquare },
+  { href: "/employee/visitors", label: "Visitors", icon: UserCheck },
   { href: "/employee/profile", label: "Profile", icon: User },
 ];
 

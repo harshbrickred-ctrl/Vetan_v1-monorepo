@@ -18,6 +18,7 @@ import {
   Palette,
   ScrollText,
   Settings,
+  UserRound,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -65,6 +66,7 @@ const main: NavItem[] = [
   { href: "/attendance", label: "Attendance", icon: CalendarDays, perm: Permission["attendance:read"] },
   { href: "/leave", label: "Leave", icon: Leaf, perm: Permission["leave:read"] },
   { href: "/tasks", label: "Tasks", icon: CheckSquare, perm: Permission["tasks:read"] },
+  { href: "/visitors", label: "Visitors", icon: UserRound, perm: Permission["visitors:read"] },
 ];
 
 const finances: NavItem[] = [
