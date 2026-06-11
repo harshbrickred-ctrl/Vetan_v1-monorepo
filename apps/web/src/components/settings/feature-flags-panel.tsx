@@ -3,6 +3,7 @@
 import {
   FEATURE_FLAG_KEYS,
   FEATURE_FLAG_LABELS,
+  FEATURE_MONTHLY_PRICE_INR,
   type FeatureFlagKey,
   type FeatureFlagsMap,
 } from "@/lib/feature-flags";
@@ -63,13 +64,27 @@ const TIER_GROUPS: { title: string; keys: FeatureFlagKey[] }[] = [
   },
 ];
 
+type CatalogEntry = {
+  key: string;
+  label: string;
+  monthlyPriceInr: number;
+};
+
 type Props = {
   flags: FeatureFlagsMap;
   onChange: (flags: FeatureFlagsMap) => void;
   disabled?: boolean;
+  showPricing?: boolean;
+  catalog?: CatalogEntry[];
 };
 
-export function FeatureFlagsPanel({ flags, onChange, disabled }: Props) {
+export function FeatureFlagsPanel({
+  flags,
+  onChange,
+  disabled,
+  showPricing,
+  catalog,
+}: Props) {
   function toggle(key: FeatureFlagKey, on: boolean) {
     onChange({ ...flags, [key]: on });
   }
@@ -77,7 +92,9 @@ export function FeatureFlagsPanel({ flags, onChange, disabled }: Props) {
   return (
     <div className="space-y-6">
       <p className="text-xs text-muted-foreground">
-        Enable modules per workspace. Disabled flags keep existing workflows unchanged.
+        {disabled
+          ? "Read-only view of entitled modules."
+          : "Toggle modules for this organization. Pricing updates the monthly subscription fee."}
       </p>
       {TIER_GROUPS.map((group) => (
         <div key={group.title}>
@@ -85,25 +102,35 @@ export function FeatureFlagsPanel({ flags, onChange, disabled }: Props) {
             {group.title}
           </p>
           <div className="grid gap-2 sm:grid-cols-2">
-            {group.keys.map((key) => (
-              <label
-                key={key}
-                className="flex cursor-pointer items-start gap-2 rounded-lg border border-border p-3 text-sm hover:bg-muted/40"
-              >
-                <Checkbox
-                  checked={flags[key] === true}
-                  onCheckedChange={(c) => toggle(key, c === true)}
-                  disabled={disabled}
-                  className="mt-0.5"
-                />
-                <span>
-                  <span className="font-medium">{FEATURE_FLAG_LABELS[key]}</span>
-                  <span className="mt-0.5 block font-mono text-[10px] text-muted-foreground">
-                    {key}
+            {group.keys.map((key) => {
+              const price =
+                catalog?.find((c) => c.key === key)?.monthlyPriceInr ??
+                FEATURE_MONTHLY_PRICE_INR[key];
+              return (
+                <label
+                  key={key}
+                  className="flex cursor-pointer items-start gap-2 rounded-lg border border-border p-3 text-sm hover:bg-muted/40"
+                >
+                  <Checkbox
+                    checked={flags[key] === true}
+                    onCheckedChange={(c) => toggle(key, c === true)}
+                    disabled={disabled}
+                    className="mt-0.5"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="font-medium">{FEATURE_FLAG_LABELS[key]}</span>
+                    {showPricing ? (
+                      <span className="mt-0.5 block text-xs text-[var(--brand-500)]">
+                        ₹{price.toLocaleString("en-IN")} / month
+                      </span>
+                    ) : null}
+                    <span className="mt-0.5 block font-mono text-[10px] text-muted-foreground">
+                      {key}
+                    </span>
                   </span>
-                </span>
-              </label>
-            ))}
+                </label>
+              );
+            })}
           </div>
         </div>
       ))}

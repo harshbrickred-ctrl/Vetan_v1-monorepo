@@ -2,10 +2,10 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Plus } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { FeatureUpgradeScreen } from "@/components/feature-modules/feature-upgrade-screen";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,18 +54,7 @@ export default function PayGroupsPage() {
   }
 
   if (!enabled) {
-    return (
-      <GlassCard level={2} className="p-6">
-        <h1 className="text-2xl font-bold">Pay groups</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Enable <strong>Pay groups</strong> in{" "}
-          <Link href="/settings/workspace?tab=saas" className="text-[var(--brand-500)] underline">
-            Workspace → SaaS → Feature modules
-          </Link>{" "}
-          to segment payroll runs.
-        </p>
-      </GlassCard>
-    );
+    return <FeatureUpgradeScreen title="Pay groups" flag="payGroups" />;
   }
 
   return (

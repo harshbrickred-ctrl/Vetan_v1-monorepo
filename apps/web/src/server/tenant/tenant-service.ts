@@ -95,6 +95,11 @@ export async function patchSettings(
       ? (row.settings as Record<string, unknown>)
       : {};
   const patch = JSON.parse(JSON.stringify(dto)) as Record<string, unknown>;
+  // Feature entitlements are platform-super-admin only — never accept from tenant settings PATCH.
+  const saasPatch = patch.saasTenant;
+  if (saasPatch && typeof saasPatch === "object" && !Array.isArray(saasPatch)) {
+    delete (saasPatch as Record<string, unknown>).featureFlags;
+  }
   const merged = deepMergeJson(current, patch);
 
   await prisma.tenant.update({

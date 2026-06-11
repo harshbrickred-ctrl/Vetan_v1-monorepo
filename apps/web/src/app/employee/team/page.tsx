@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
+import { FeatureUpgradeScreen } from "@/components/feature-modules/feature-upgrade-screen";
 import { GlassCard } from "@/components/ui/glass-card";
 import { LeaveStatusBadge } from "@/components/employee/leave-status-badge";
 import {
@@ -34,14 +35,7 @@ export default function EmployeeTeamPage() {
   }
 
   if (!enabled) {
-    return (
-      <GlassCard level={2} className="p-6">
-        <h1 className="text-xl font-bold">My team</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Team views are not enabled for your workspace. Contact HR if you manage direct reports.
-        </p>
-      </GlassCard>
-    );
+    return <FeatureUpgradeScreen title="My team" flag="managerRole" />;
   }
 
   return (

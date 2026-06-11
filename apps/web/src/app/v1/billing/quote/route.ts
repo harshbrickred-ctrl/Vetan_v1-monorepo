@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const GET = withApi(async (req) => {
-  await requireAuth(req, ["billing:read"]);
+  const user = await requireAuth(req, ["billing:read"]);
   const q = await validateQuery(req, Billing.BillingQuoteQuerySchema);
-  return billing.getQuote(q.planCode, q.billingCycle);
+  return billing.getQuote(user.tenantId, q.billingCycle);
 });

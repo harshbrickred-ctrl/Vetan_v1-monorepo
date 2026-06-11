@@ -72,7 +72,7 @@ const SaasTenantSettingsSchema = z.object({
   storageLimit: z.string().max(20).optional(),
   customBranding: z.string().max(2000).optional(),
   customDomain: z.string().max(253).optional(),
-  featureFlags: z.record(z.string(), z.unknown()).optional(),
+  /** Read-only for tenant admins — only platform super admin may change entitlements. */
   apiAccess: z.boolean().optional(),
   auditLogsEnabled: z.boolean().optional(),
 });

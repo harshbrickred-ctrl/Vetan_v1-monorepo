@@ -16,6 +16,7 @@ import {
   Megaphone,
   Settings,
   UserCheck,
+  Lock,
   UserRound,
   Users,
 } from "lucide-react";
@@ -270,10 +271,11 @@ export function EmployeeSidebar({ className }: { className?: string }) {
           Document center
         </Link>
 
-        {FEATURE_LINKS.filter((l) => isEnabled(l.flag)).map((link) => {
+        {FEATURE_LINKS.map((link) => {
           const Icon = link.icon;
           const active =
             pathname === link.href || pathname.startsWith(`${link.href}/`);
+          const locked = !isEnabled(link.flag);
           return (
             <Link
               key={link.href}
@@ -282,11 +284,17 @@ export function EmployeeSidebar({ className }: { className?: string }) {
                 "flex items-center gap-2 rounded-lg px-3 py-2 font-medium transition-colors",
                 active
                   ? "bg-[var(--brand-500)]/12 text-[var(--brand-500)]"
-                  : "text-foreground hover:bg-muted/60"
+                  : "text-foreground hover:bg-muted/60",
+                locked && !active && "opacity-80"
               )}
             >
               <Icon className="size-4 shrink-0 opacity-80" />
-              {link.label}
+              <span className="flex flex-1 items-center justify-between gap-2">
+                {link.label}
+                {locked ? (
+                  <Lock className="size-3 text-muted-foreground" aria-label="Upgrade required" />
+                ) : null}
+              </span>
             </Link>
           );
         })}

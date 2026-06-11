@@ -4,12 +4,15 @@ import { useMemo } from "react";
 
 import { Permission, permissionsForRole, type PermissionKey } from "@/lib/auth/permissions";
 import { useAuthStore } from "@/lib/auth/auth-store";
+import { permissionRequiresFeature } from "@/lib/feature-flags";
+import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
 
 const permissionValues = new Set<string>(Object.values(Permission));
 
 export function usePermissions() {
   const role = useAuthStore((s) => s.user?.role);
   const apiPermissions = useAuthStore((s) => s.user?.permissions);
+  const { isEnabled, isLoading: flagsLoading } = useFeatureFlags();
 
   return useMemo(() => {
     const set = new Set<PermissionKey>();
@@ -20,8 +23,15 @@ export function usePermissions() {
     } else {
       for (const p of permissionsForRole(role ?? "")) set.add(p);
     }
-    return {
-      hasPermission: (perm: PermissionKey) => set.has(perm),
+
+    const hasPermission = (perm: PermissionKey) => {
+      if (!set.has(perm)) return false;
+      const requiredFeature = permissionRequiresFeature(perm);
+      if (!requiredFeature) return true;
+      if (flagsLoading) return false;
+      return isEnabled(requiredFeature);
     };
-  }, [role, apiPermissions]);
+
+    return { hasPermission, flagsLoading };
+  }, [role, apiPermissions, isEnabled, flagsLoading]);
 }

@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { toast } from "sonner";
 
+import { FeatureUpgradeScreen } from "@/components/feature-modules/feature-upgrade-screen";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/client";
@@ -31,18 +32,7 @@ export default function SalaryStructuresPage() {
   }
 
   if (!enabled) {
-    return (
-      <GlassCard level={2} className="p-6">
-        <h1 className="text-2xl font-bold">Salary structures</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Enable <strong>Salary structures admin</strong> in{" "}
-          <Link href="/settings/workspace?tab=saas" className="text-[var(--brand-500)] underline">
-            Workspace → SaaS → Feature modules
-          </Link>{" "}
-          to build compensation templates.
-        </p>
-      </GlassCard>
-    );
+    return <FeatureUpgradeScreen title="Salary structures" flag="salaryStructuresAdmin" />;
   }
 
   return (

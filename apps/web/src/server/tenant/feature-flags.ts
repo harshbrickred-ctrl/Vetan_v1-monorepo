@@ -1,5 +1,6 @@
 import { prisma } from "@sangam/db";
-import { NotFoundError } from "@sangam/api-kit";
+import { ForbiddenError } from "@sangam/api-kit";
+import { FEATURE_FLAG_LABELS } from "@sangam/contracts";
 import type { FeatureFlagKey, FeatureFlagsMap } from "@sangam/contracts";
 
 function flagsEnforceEnabled(): boolean {
@@ -47,13 +48,16 @@ export async function isFeatureEnabled(
   return flags[flag] === true;
 }
 
-/** Throws 404 when flag is off — use on new module routes only. */
+/** Throws when flag is off — use on add-on module routes. */
 export async function requireFeature(
   tenantId: string,
   flag: FeatureFlagKey,
 ): Promise<void> {
   const on = await isFeatureEnabled(tenantId, flag);
   if (!on) {
-    throw new NotFoundError("Feature not enabled for this workspace");
+    const label = FEATURE_FLAG_LABELS[flag] ?? flag;
+    throw new ForbiddenError(
+      `The "${label}" module is not included in your workspace. Contact Vetan support to upgrade.`,
+    );
   }
 }

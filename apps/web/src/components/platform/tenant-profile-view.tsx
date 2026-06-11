@@ -41,6 +41,7 @@ import {
 } from "@/lib/api/payment-documents";
 import { patchPlatformTenantCompanyCode } from "@/lib/api/platform-password-manager";
 import { TenantLegalDocumentsManager } from "@/components/organization/tenant-legal-documents-manager";
+import { TenantFeatureEntitlementsPanel } from "@/components/platform/tenant-feature-entitlements-panel";
 import { suggestCompanyCodeFromName } from "@/lib/org/default-credentials";
 import { usePlatformAuthStore } from "@/lib/platform/auth-store";
 import { cn } from "@/lib/utils";
@@ -453,6 +454,10 @@ export function TenantProfileView({ tenantId }: { tenantId: string }) {
             </div>
           </dl>
         </GlassCard>
+      </section>
+
+      <section id="features" className="scroll-mt-6">
+        <TenantFeatureEntitlementsPanel tenantId={tenantId} />
       </section>
 
       <section id="legal" className="scroll-mt-6">

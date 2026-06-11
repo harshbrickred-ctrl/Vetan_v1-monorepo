@@ -16,8 +16,8 @@ import {
   fetchLeaveTypes,
 } from "@/lib/api/leave-types";
 import { useAuthStore } from "@/lib/auth/auth-store";
+import { FeatureUpgradeScreen } from "@/components/feature-modules/feature-upgrade-screen";
 import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
-import Link from "next/link";
 
 export default function LeaveTypesPage() {
   const token = useAuthStore((s) => s.token);
@@ -58,18 +58,7 @@ export default function LeaveTypesPage() {
   }
 
   if (!enabled) {
-    return (
-      <GlassCard level={2} className="p-6">
-        <h1 className="text-2xl font-bold">Leave types</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Enable <strong>Leave types admin</strong> in{" "}
-          <Link href="/settings/workspace?tab=saas" className="text-[var(--brand-500)] underline">
-            Workspace → SaaS → Feature modules
-          </Link>{" "}
-          to configure leave policies.
-        </p>
-      </GlassCard>
-    );
+    return <FeatureUpgradeScreen title="Leave types" flag="leaveTypesAdmin" />;
   }
 
   return (

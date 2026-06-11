@@ -1,11 +1,17 @@
 import { ApiError, apiFetchJson, getApiBaseUrl, pickErrorMessage } from "./client";
 
 export type BillingCycle = "MONTHLY" | "QUARTERLY" | "HALF_YEARLY" | "YEARLY";
-export type BillingPlanCode = "STARTER" | "GROWTH";
+
+export type EntitledFeature = {
+  key: string;
+  label: string;
+  monthlyPriceInr: number;
+};
 
 export type BillingSummary = {
   status: string;
   planCode: string | null;
+  billingModel: "per_feature";
   trialEndsAt: string | null;
   currentPeriodEnd: string | null;
   razorpaySubscriptionId: string | null;
@@ -15,10 +21,13 @@ export type BillingSummary = {
   accessReason: string;
   razorpayConfigured: boolean;
   razorpayKeyId: string | null;
+  entitledFeatures: EntitledFeature[];
+  monthlyFeeInr: number;
+  enabledFeatureCount: number;
 };
 
 export type BillingQuote = {
-  planCode: BillingPlanCode;
+  planCode: "FEATURES";
   billingCycle: BillingCycle;
   monthlyBaseInr: number;
   months: number;
@@ -26,20 +35,26 @@ export type BillingQuote = {
   subtotalInr: number;
   totalInr: number;
   amountPaise: number;
+  enabledFeatures: string[];
+  featureCount: number;
 };
 
-export type BillingPricingPlan = {
-  planCode: BillingPlanCode;
-  name: string;
-  description: string;
-  monthlyBaseInr: number;
-  options: Array<{
+export type FeaturePricingEntry = {
+  key: string;
+  label: string;
+  tier: number;
+  monthlyPriceInr: number;
+  defaultEnabled: boolean;
+};
+
+export type BillingPricingCatalog = {
+  model: "per_feature";
+  features: FeaturePricingEntry[];
+  cycles: Array<{
     billingCycle: BillingCycle;
     label: string;
     months: number;
     discountPercent: number;
-    subtotalInr: number;
-    totalInr: number;
   }>;
 };
 
@@ -63,8 +78,8 @@ export async function fetchBillingSummary(token: string): Promise<BillingSummary
   return apiFetchJson<BillingSummary>("/v1/billing", { method: "GET", token });
 }
 
-export async function fetchBillingPricing(token: string): Promise<{ plans: BillingPricingPlan[] }> {
-  return apiFetchJson<{ plans: BillingPricingPlan[] }>("/v1/billing/pricing", {
+export async function fetchBillingPricing(token: string): Promise<BillingPricingCatalog> {
+  return apiFetchJson<BillingPricingCatalog>("/v1/billing/pricing", {
     method: "GET",
     token,
   });
@@ -72,10 +87,9 @@ export async function fetchBillingPricing(token: string): Promise<{ plans: Billi
 
 export async function fetchBillingQuote(
   token: string,
-  planCode: BillingPlanCode,
-  billingCycle: BillingCycle
+  billingCycle: BillingCycle,
 ): Promise<BillingQuote> {
-  const q = new URLSearchParams({ planCode, billingCycle });
+  const q = new URLSearchParams({ billingCycle });
   return apiFetchJson<BillingQuote>(`/v1/billing/quote?${q}`, { method: "GET", token });
 }
 
@@ -101,7 +115,7 @@ export async function fetchBillingInvoices(token: string): Promise<BillingInvoic
 export async function downloadBillingInvoice(
   token: string,
   invoiceId: string,
-  filename: string
+  filename: string,
 ): Promise<void> {
   const base = getApiBaseUrl();
   const res = await fetch(`${base}/v1/billing/invoices/${invoiceId}/download`, {
@@ -129,13 +143,12 @@ export async function downloadBillingInvoice(
 
 export async function subscribeBilling(
   token: string,
-  planCode: BillingPlanCode,
-  billingCycle: BillingCycle
+  billingCycle: BillingCycle,
 ): Promise<SubscribeResult> {
   return apiFetchJson<SubscribeResult>("/v1/billing/subscribe", {
     method: "POST",
     token,
-    body: JSON.stringify({ planCode, billingCycle }),
+    body: JSON.stringify({ billingCycle }),
   });
 }
 
@@ -145,7 +158,7 @@ export async function verifyBillingPayment(
     razorpay_order_id: string;
     razorpay_payment_id: string;
     razorpay_signature: string;
-  }
+  },
 ): Promise<{ ok: boolean; planCode: string; billingCycle: BillingCycle; currentPeriodEnd: string }> {
   return apiFetchJson("/v1/billing/verify-payment", {
     method: "POST",

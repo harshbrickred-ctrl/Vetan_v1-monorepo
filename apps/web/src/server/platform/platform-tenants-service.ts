@@ -15,7 +15,6 @@ import type { Platform } from "@sangam/contracts";
 import {
   deriveLiveStatus,
   estimateServerCostInr,
-  monthlyFeeForPlan,
   slugifyWorkspace,
   type TenantLiveStatus,
 } from "./tenant-utils";
@@ -29,6 +28,10 @@ import {
 } from "@/server/auth/employee-credentials-service";
 import { buildInvoiceDownloadPayload } from "@/server/billing/billing-service";
 import { ensureTenantLeaveTypes } from "@/server/leave/leave-setup";
+import { buildDefaultFeatureFlagsMap } from "@sangam/contracts";
+import { monthlyFeeFromFeatureFlags } from "@/server/billing/feature-billing";
+import { deepMergeJson } from "@/server/shared/deep-merge";
+import { applyDefaultEntitlementsOnProvision } from "@/server/platform/platform-feature-entitlements-service";
 
 /**
  * Platform-tenants service — ported from
@@ -104,11 +107,13 @@ export async function provision(dto: Platform.ProvisionTenantDto) {
   }
 
   const emailNorm = dto.adminEmail.toLowerCase();
-  const planCode = dto.planCode ?? "STARTER";
+  const planCode = dto.planCode ?? "FEATURES";
   const subscriptionStatus =
     dto.subscriptionStatus ?? SubscriptionStatus.TRIALING;
   const trialDays = dto.trialDays ?? trialDaysFromEnv();
-  const monthlyFeeInr = dto.monthlyFeeInr ?? monthlyFeeForPlan(planCode);
+  const defaultFlags = buildDefaultFeatureFlagsMap();
+  const monthlyFeeInr =
+    dto.monthlyFeeInr ?? monthlyFeeFromFeatureFlags(defaultFlags);
   const monthlyServerCostInr =
     dto.monthlyServerCostInr ?? estimateServerCostInr(0);
   const paymentStatus = dto.paymentStatus ?? TenantPaymentStatus.UNPAID;
@@ -117,7 +122,10 @@ export async function provision(dto: Platform.ProvisionTenantDto) {
   const legalName = dto.legalName?.trim() || dto.name.trim();
   const industry = dto.industry?.trim() || "General";
   const country = dto.country?.trim() || "IN";
-  const settings = (dto.settings ?? {}) as Prisma.InputJsonValue;
+  const settings = deepMergeJson(
+    (dto.settings ?? {}) as Record<string, unknown>,
+    { saasTenant: { featureFlags: defaultFlags } },
+  ) as Prisma.InputJsonValue;
 
   const deptName = dto.departmentName?.trim() || "General";
   const deptCode =
@@ -236,6 +244,7 @@ export async function provision(dto: Platform.ProvisionTenantDto) {
   }, PROVISION_TX_OPTIONS);
 
   await ensureTenantLeaveTypes(result.tenant.id);
+  await applyDefaultEntitlementsOnProvision(result.tenant.id);
 
   const liveStatus = deriveLiveStatus({
     onboardingCompletedAt: result.tenant.onboardingCompletedAt,

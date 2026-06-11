@@ -3,10 +3,13 @@ import { BadRequestError, NotFoundError } from "@sangam/api-kit";
 import type { Billing } from "@sangam/contracts";
 import { razorpay } from "@sangam/demo";
 import {
-  calculateSubscriptionPrice,
-  listPricingCatalog,
+  calculateFeatureSubscriptionPrice,
+  listFeaturePricingCatalog,
+  monthlyFeeFromFeatureFlags,
   periodEndFromCycle,
-} from "./billing-pricing";
+  summarizeEntitledFeatures,
+} from "./feature-billing";
+import { getTenantFeatureFlags } from "@/server/tenant/feature-flags";
 import { buildVetanInvoiceHtml } from "../shared/documents/vetan-invoice-html";
 
 /**
@@ -48,14 +51,15 @@ export async function ensureTrialSubscription(tenantId: string) {
 }
 
 export function getPricingCatalog() {
-  return { plans: listPricingCatalog() };
+  return listFeaturePricingCatalog();
 }
 
-export function getQuote(
-  planCode: Billing.BillingPlanCode,
+export async function getQuote(
+  tenantId: string,
   billingCycle: Billing.BillingCycle,
 ) {
-  return calculateSubscriptionPrice(planCode, billingCycle);
+  const flags = await getTenantFeatureFlags(tenantId);
+  return calculateFeatureSubscriptionPrice(flags, billingCycle);
 }
 
 function resolveAccess(sub: {
@@ -89,9 +93,13 @@ export async function getSummary(tenantId: string) {
     where: { tenantId, deletedAt: null, status: "ACTIVE" },
   });
   const access = resolveAccess(sub);
+  const flags = await getTenantFeatureFlags(tenantId);
+  const entitledFeatures = summarizeEntitledFeatures(flags);
+  const monthlyFeeInr = monthlyFeeFromFeatureFlags(flags);
   return {
     status: sub.status,
     planCode: sub.planCode,
+    billingModel: "per_feature" as const,
     trialEndsAt: sub.trialEndsAt?.toISOString() ?? null,
     currentPeriodEnd: sub.currentPeriodEnd?.toISOString() ?? null,
     razorpaySubscriptionId: sub.razorpaySubscriptionId,
@@ -103,6 +111,9 @@ export async function getSummary(tenantId: string) {
     razorpayKeyId: razorpay.isRazorpayConfigured()
       ? process.env.RAZORPAY_KEY_ID ?? null
       : null,
+    entitledFeatures,
+    monthlyFeeInr,
+    enabledFeatureCount: entitledFeatures.length,
   };
 }
 
@@ -111,9 +122,17 @@ export async function createCheckout(
   user: { email: string; name: string },
   dto: Billing.CreateSubscriptionDto,
 ) {
-  const { planCode, billingCycle } = dto;
-  const quote = calculateSubscriptionPrice(planCode, billingCycle);
+  const { billingCycle } = dto;
+  const flags = await getTenantFeatureFlags(tenantId);
+  const quote = calculateFeatureSubscriptionPrice(flags, billingCycle);
+  const planCode = "FEATURES" as Billing.BillingPlanCode;
   await ensureTrialSubscription(tenantId);
+
+  if (quote.monthlyBaseInr <= 0) {
+    throw new BadRequestError(
+      "No feature modules are enabled for this workspace. Contact Vetan support to add modules before subscribing.",
+    );
+  }
 
   if (!razorpay.isRazorpayConfigured()) {
     return mockActivateSubscription(
@@ -121,6 +140,7 @@ export async function createCheckout(
       planCode,
       billingCycle,
       quote.totalInr,
+      flags,
     );
   }
 
@@ -162,6 +182,7 @@ async function mockActivateSubscription(
   planCode: Billing.BillingPlanCode,
   billingCycle: Billing.BillingCycle,
   totalInr: number,
+  flags: Awaited<ReturnType<typeof getTenantFeatureFlags>>,
 ) {
   const periodEnd = periodEndFromCycle(billingCycle);
   await prisma.subscription.update({
@@ -183,7 +204,7 @@ async function mockActivateSubscription(
     mock: true,
     planCode,
     billingCycle,
-    quote: calculateSubscriptionPrice(planCode, billingCycle),
+    quote: calculateFeatureSubscriptionPrice(flags, billingCycle),
     orderId: null,
     amount: totalInr * 100,
     currency: "INR",
@@ -221,7 +242,7 @@ export async function verifyAndActivate(
     throw new BadRequestError("Order does not belong to this workspace");
   }
 
-  const planCode = (order.notes?.planCode ?? "GROWTH") as Billing.BillingPlanCode;
+  const planCode = (order.notes?.planCode ?? "FEATURES") as Billing.BillingPlanCode;
   const billingCycle = (order.notes?.billingCycle ??
     "MONTHLY") as Billing.BillingCycle;
   const totalInr = Number(order.notes?.totalInr ?? 0);

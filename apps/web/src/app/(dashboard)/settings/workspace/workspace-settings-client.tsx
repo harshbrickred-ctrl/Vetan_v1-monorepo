@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { BankSalaryFields } from "@/components/employees/bank-salary-fields";
-import { FeatureFlagsPanel } from "@/components/settings/feature-flags-panel";
+import { TenantFeatureEntitlementsReadonly } from "@/components/settings/tenant-feature-entitlements-readonly";
 import { NotificationSettingsPanel } from "@/components/settings/notification-settings-panel";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,7 +27,6 @@ import { changeAuthPassword, fetchSessionUser, patchAuthProfile } from "@/lib/au
 import { useAuthStore } from "@/lib/auth/auth-store";
 import { type SalaryPaymentMethod } from "@/lib/banking/payment-methods";
 import { usePermissions } from "@/lib/hooks/use-permissions";
-import { readFeatureFlagsFromTenantSettings, type FeatureFlagsMap } from "@/lib/feature-flags";
 import { cn } from "@/lib/utils";
 
 const TAB_KEYS = [
@@ -113,8 +112,6 @@ export function WorkspaceSettingsClient() {
   const [doc, setDoc] = useState<Record<string, string>>({});
   const [saas, setSaas] = useState<Record<string, string>>({});
   const [saasBool, setSaasBool] = useState({ apiAccess: false, auditLogsEnabled: false });
-  const [featureFlagsMap, setFeatureFlagsMap] = useState<FeatureFlagsMap>({});
-  const [featureFlagsJson, setFeatureFlagsJson] = useState("{}");
   const [bank, setBank] = useState({
     bankName: "",
     bankAccount: "",
@@ -208,17 +205,6 @@ export function WorkspaceSettingsClient() {
       apiAccess: bool(z.apiAccess) ?? false,
       auditLogsEnabled: bool(z.auditLogsEnabled) ?? false,
     });
-    const ff =
-      z.featureFlags && typeof z.featureFlags === "object" && !Array.isArray(z.featureFlags)
-        ? readFeatureFlagsFromTenantSettings({ saasTenant: { featureFlags: z.featureFlags } })
-        : readFeatureFlagsFromTenantSettings(t.settings);
-    setFeatureFlagsMap(ff);
-    try {
-      setFeatureFlagsJson(JSON.stringify(ff, null, 2));
-    } catch {
-      setFeatureFlagsJson("{}");
-    }
-
     const b = readObj(t.settings, "bankingDisbursement");
     const method = str(b.salaryPaymentMethod).toUpperCase();
     setBank({
@@ -330,7 +316,6 @@ export function WorkspaceSettingsClient() {
       saasTenant: {
         ...saas,
         ...saasBool,
-        featureFlags: featureFlagsMap,
       },
     });
   };
@@ -755,14 +740,7 @@ export function WorkspaceSettingsClient() {
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label>Feature modules</Label>
-                <FeatureFlagsPanel
-                  flags={featureFlagsMap}
-                  onChange={(next) => {
-                    setFeatureFlagsMap(next);
-                    setFeatureFlagsJson(JSON.stringify(next, null, 2));
-                  }}
-                  disabled={!canWrite}
-                />
+                <TenantFeatureEntitlementsReadonly />
               </div>
             </div>
             <div className="mt-4 flex flex-col gap-3">

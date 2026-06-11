@@ -1,11 +1,20 @@
 import {
   FEATURE_FLAG_KEYS,
   FEATURE_FLAG_LABELS,
+  FEATURE_MONTHLY_PRICE_INR,
+  permissionRequiresFeature,
   type FeatureFlagKey,
   type FeatureFlagsMap,
 } from "@sangam/contracts";
 
-export { FEATURE_FLAG_KEYS, FEATURE_FLAG_LABELS, type FeatureFlagKey, type FeatureFlagsMap };
+export {
+  FEATURE_FLAG_KEYS,
+  FEATURE_FLAG_LABELS,
+  FEATURE_MONTHLY_PRICE_INR,
+  permissionRequiresFeature,
+  type FeatureFlagKey,
+  type FeatureFlagsMap,
+};
 
 export function readFeatureFlagsFromTenantSettings(
   settings: Record<string, unknown> | undefined,

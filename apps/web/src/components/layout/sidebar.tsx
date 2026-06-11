@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   Leaf,
   LifeBuoy,
+  Lock,
   LogOut,
   Megaphone,
   Network,
@@ -92,6 +93,41 @@ const finances: NavItem[] = [
 ];
 
 const featureModules: NavItem[] = [
+  {
+    href: "/settings/leave-types",
+    label: "Leave types",
+    icon: Leaf,
+    perm: Permission["settings:read"],
+    featureFlag: "leaveTypesAdmin",
+  },
+  {
+    href: "/settings/salary-components",
+    label: "Salary components",
+    icon: Wallet,
+    perm: Permission["settings:read"],
+    featureFlag: "salaryComponentsAdmin",
+  },
+  {
+    href: "/settings/salary-structures",
+    label: "Salary structures",
+    icon: FileText,
+    perm: Permission["settings:read"],
+    featureFlag: "salaryStructuresAdmin",
+  },
+  {
+    href: "/settings/pay-groups",
+    label: "Pay groups",
+    icon: ClipboardList,
+    perm: Permission["payroll:read"],
+    featureFlag: "payGroups",
+  },
+  {
+    href: "/settings/users",
+    label: "Users & roles",
+    icon: Users,
+    perm: Permission["settings:read"],
+    featureFlag: "granularRbac",
+  },
   {
     href: "/organization/org-chart",
     label: "Org chart",
@@ -228,7 +264,6 @@ function NavSection({
 
   const visible = items.filter((i) => {
     if (i.perm && !hasPermission(i.perm)) return false;
-    if (i.featureFlag && !isEnabled(i.featureFlag)) return false;
     return true;
   });
   if (visible.length === 0) return null;
@@ -243,6 +278,7 @@ function NavSection({
       <ul className="flex flex-col gap-0.5">
         {visible.map((item) => {
           const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+          const locked = item.featureFlag ? !isEnabled(item.featureFlag) : false;
           return (
             <li key={item.href}>
               <Link
@@ -253,11 +289,21 @@ function NavSection({
                   active
                     ? "bg-[color-mix(in_srgb,var(--brand-500)_14%,transparent)] text-foreground shadow-[inset_3px_0_0_var(--brand-500)]"
                     : "text-muted-foreground hover:bg-[color-mix(in_srgb,var(--brand-500)_6%,transparent)] hover:text-foreground",
+                  locked && !active && "opacity-80",
                   collapsed && "justify-center px-0"
                 )}
               >
                 <item.icon className="size-[18px] shrink-0 text-[var(--brand-400)]" aria-hidden />
-                {!collapsed ? <span>{item.label}</span> : null}
+                {!collapsed ? (
+                  <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                    <span className="truncate">{item.label}</span>
+                    {locked ? (
+                      <Lock className="size-3 shrink-0 text-muted-foreground" aria-label="Upgrade required" />
+                    ) : null}
+                  </span>
+                ) : locked ? (
+                  <Lock className="sr-only" aria-label="Upgrade required" />
+                ) : null}
               </Link>
             </li>
           );

@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, IndianRupee, Loader2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,6 @@ import {
   subscribeBilling,
   verifyBillingPayment,
   type BillingCycle,
-  type BillingPlanCode,
   downloadBillingInvoice,
 } from "@/lib/api/billing";
 import { ApiError } from "@/lib/api/client";
@@ -143,7 +142,6 @@ export default function BillingPage() {
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
-  const [selectedPlan, setSelectedPlan] = useState<BillingPlanCode>("STARTER");
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("MONTHLY");
 
   const { data, isLoading, error } = useQuery({
@@ -159,8 +157,8 @@ export default function BillingPage() {
   });
 
   const quoteQuery = useQuery({
-    queryKey: ["billing", "quote", selectedPlan, billingCycle, token],
-    queryFn: () => fetchBillingQuote(token!, selectedPlan, billingCycle),
+    queryKey: ["billing", "quote", billingCycle, token],
+    queryFn: () => fetchBillingQuote(token!, billingCycle),
     enabled: Boolean(token),
   });
 
@@ -170,13 +168,8 @@ export default function BillingPage() {
     enabled: Boolean(token),
   });
 
-  const selectedPlanMeta = useMemo(
-    () => pricingQuery.data?.plans.find((p) => p.planCode === selectedPlan),
-    [pricingQuery.data, selectedPlan]
-  );
-
   const subscribe = useMutation({
-    mutationFn: () => subscribeBilling(token!, selectedPlan, billingCycle),
+    mutationFn: () => subscribeBilling(token!, billingCycle),
     onSuccess: async (result) => {
       if (result.mock) {
         toast.success(result.message ?? "Subscription activated (dev mock)");
@@ -194,7 +187,7 @@ export default function BillingPage() {
           amount: result.amount,
           currency: result.currency,
           name: "Vetan HRMS",
-          description: `${result.planCode} · ${CYCLE_LABELS[billingCycle]}`,
+          description: `Feature modules · ${CYCLE_LABELS[billingCycle]}`,
           prefill: result.prefill,
           onSuccess: async (response) => {
             try {
@@ -223,8 +216,8 @@ export default function BillingPage() {
       <div>
         <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">Billing</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Pay for Vetan SaaS access with Razorpay. Choose a plan and billing tenure — discounts apply
-          for longer commitments.
+          Your subscription is based on feature modules enabled by Vetan platform administration.
+          Pay for entitled modules with Razorpay — tenure discounts apply for longer commitments.
         </p>
       </div>
 
@@ -238,11 +231,16 @@ export default function BillingPage() {
       {error ? <p className="text-sm text-destructive">{(error as Error).message}</p> : null}
 
       {data ? (
-        <GlassCard level={2} header={<h2 className="text-sm font-semibold">Current plan</h2>}>
+        <GlassCard level={2} header={<h2 className="text-sm font-semibold">Current subscription</h2>}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="text-lg font-semibold">
-                {data.planCode === "TRIAL" || !data.planCode ? "Free trial" : data.planCode}
+                {data.planCode === "TRIAL" || !data.planCode
+                  ? "Free trial"
+                  : `Per-feature · ${data.enabledFeatureCount} module${data.enabledFeatureCount === 1 ? "" : "s"}`}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {formatCurrency(data.monthlyFeeInr)}/month for enabled modules
               </p>
               <p
                 className={cn(
@@ -278,31 +276,33 @@ export default function BillingPage() {
         </GlassCard>
       ) : null}
 
+      <GlassCard level={2} header={<h2 className="text-sm font-semibold">Enabled modules</h2>}>
+        <p className="mb-4 text-xs text-muted-foreground">
+          Module entitlements are configured by Vetan super admin. Contact support to add or remove
+          features — pricing updates automatically.
+        </p>
+        {data?.entitledFeatures?.length ? (
+          <ul className="space-y-2 text-sm">
+            {data.entitledFeatures.map((f) => (
+              <li
+                key={f.key}
+                className="flex items-center justify-between gap-4 rounded-lg border border-border px-3 py-2"
+              >
+                <span>{f.label}</span>
+                <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                  {formatCurrency(f.monthlyPriceInr)}/mo
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No add-on modules are enabled yet. Core payroll and employee portal remain available.
+          </p>
+        )}
+      </GlassCard>
+
       <GlassCard level={2} header={<h2 className="text-sm font-semibold">Subscribe</h2>}>
-        <div className="grid gap-4 md:grid-cols-2">
-          {(pricingQuery.data?.plans ?? []).map((plan) => (
-            <button
-              key={plan.planCode}
-              type="button"
-              onClick={() => setSelectedPlan(plan.planCode)}
-              className={cn(
-                "rounded-xl border p-4 text-left transition-colors",
-                selectedPlan === plan.planCode
-                  ? "border-[var(--brand-500)] bg-[color-mix(in_srgb,var(--brand-500)_8%,transparent)]"
-                  : "border-border hover:border-[color-mix(in_srgb,var(--brand-500)_35%,transparent)]"
-              )}
-            >
-              <div className="flex items-center gap-2">
-                <IndianRupee className="size-4 text-[var(--brand-500)]" />
-                <span className="font-semibold">{plan.name}</span>
-              </div>
-              <p className="mt-2 text-sm text-muted-foreground">{plan.description}</p>
-              <p className="mt-2 font-mono text-sm">
-                From {formatCurrency(plan.monthlyBaseInr)}/mo
-              </p>
-            </button>
-          ))}
-        </div>
 
         <div className="mt-6">
           <Label>Billing tenure</Label>
@@ -327,7 +327,10 @@ export default function BillingPage() {
           <p className="mt-4 text-sm text-muted-foreground">Calculating price…</p>
         ) : quote ? (
           <div className="mt-6 rounded-lg border border-border bg-muted/20 p-4">
-            <p className="text-sm font-medium">{selectedPlanMeta?.name ?? selectedPlan} subscription</p>
+            <p className="text-sm font-medium">
+              {quote.featureCount} module{quote.featureCount === 1 ? "" : "s"} ·{" "}
+              {CYCLE_LABELS[billingCycle]}
+            </p>
             <dl className="mt-3 space-y-1 text-sm">
               <div className="flex justify-between gap-4 text-muted-foreground">
                 <dt>Base ({quote.months} mo × {formatCurrency(quote.monthlyBaseInr)})</dt>
@@ -360,7 +363,7 @@ export default function BillingPage() {
           ) : data?.razorpayConfigured ? (
             `Pay ${quote ? formatCurrency(quote.totalInr) : ""} with Razorpay`
           ) : (
-            `Activate ${quote ? formatCurrency(quote.totalInr) : "plan"} (dev mock)`
+            `Activate ${quote ? formatCurrency(quote.totalInr) : "subscription"} (dev mock)`
           )}
         </Button>
         {user?.email ? (

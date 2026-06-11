@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-export const BILLING_PLAN_CODES = ["STARTER", "GROWTH"] as const;
+/** Legacy plan codes kept for DB rows; new subscriptions use FEATURES. */
+export const BILLING_PLAN_CODES = ["FEATURES", "STARTER", "GROWTH", "TRIAL"] as const;
 export type BillingPlanCode = (typeof BILLING_PLAN_CODES)[number];
 
 export const BILLING_CYCLES = [
@@ -12,10 +13,9 @@ export const BILLING_CYCLES = [
 export type BillingCycle = (typeof BILLING_CYCLES)[number];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /v1/billing/subscribe
+// POST /v1/billing/subscribe — pay for super-admin enabled feature entitlements
 
 export const CreateSubscriptionSchema = z.object({
-  planCode: z.enum(BILLING_PLAN_CODES),
   billingCycle: z.enum(BILLING_CYCLES),
 });
 export type CreateSubscriptionDto = z.infer<typeof CreateSubscriptionSchema>;
@@ -34,7 +34,16 @@ export type VerifyPaymentDto = z.infer<typeof VerifyPaymentSchema>;
 // GET /v1/billing/quote
 
 export const BillingQuoteQuerySchema = z.object({
-  planCode: z.enum(BILLING_PLAN_CODES),
   billingCycle: z.enum(BILLING_CYCLES),
 });
 export type BillingQuoteQueryDto = z.infer<typeof BillingQuoteQuerySchema>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PATCH /v1/platform/tenants/:tenantId/feature-entitlements
+
+export const PatchFeatureEntitlementsSchema = z.object({
+  featureFlags: z.record(z.string(), z.boolean()),
+});
+export type PatchFeatureEntitlementsDto = z.infer<
+  typeof PatchFeatureEntitlementsSchema
+>;
