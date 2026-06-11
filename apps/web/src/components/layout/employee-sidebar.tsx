@@ -2,17 +2,22 @@
 
 import { useQuery } from "@tanstack/react-query";
 import {
+  BookOpen,
   CalendarDays,
   CheckSquare,
   ChevronDown,
   Clock,
   FileStack,
+  FileText,
   Home,
   IndianRupee,
+  LifeBuoy,
   LogOut,
+  Megaphone,
   Settings,
   UserCheck,
   UserRound,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -25,6 +30,8 @@ import { EmployeeOrgBrand } from "@/components/employee/employee-org-brand";
 import { fetchMeProfile } from "@/lib/api/employee-portal";
 import { logout } from "@/lib/auth/auth-service";
 import { useAuthStore } from "@/lib/auth/auth-store";
+import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
+import type { FeatureFlagKey } from "@/lib/feature-flags";
 import { cn } from "@/lib/utils";
 
 type NavGroup = {
@@ -33,6 +40,17 @@ type NavGroup = {
   icon: typeof Home;
   items: { href: string; label: string }[];
 };
+
+type FeatureLink = { href: string; label: string; icon: typeof Home; flag: FeatureFlagKey };
+
+const FEATURE_LINKS: FeatureLink[] = [
+  { href: "/employee/directory", label: "Directory", icon: Users, flag: "employeeDirectory" },
+  { href: "/employee/policies", label: "Policies", icon: FileText, flag: "policyLibrary" },
+  { href: "/employee/tax", label: "Tax declaration", icon: FileStack, flag: "taxDeclarations" },
+  { href: "/employee/announcements", label: "Announcements", icon: Megaphone, flag: "announcements" },
+  { href: "/employee/helpdesk", label: "Helpdesk", icon: LifeBuoy, flag: "helpdesk" },
+  { href: "/employee/training", label: "Training", icon: BookOpen, flag: "training" },
+];
 
 const GROUPS: NavGroup[] = [
   {
@@ -65,6 +83,12 @@ const GROUPS: NavGroup[] = [
     items: [{ href: "/employee/tasks", label: "My tasks" }],
   },
   {
+    id: "team",
+    label: "Team",
+    icon: Users,
+    items: [{ href: "/employee/team", label: "My team" }],
+  },
+  {
     id: "visitors",
     label: "Visitors",
     icon: UserCheck,
@@ -83,6 +107,7 @@ function routeMatchesGroup(pathname: string, group: NavGroup): boolean {
 export function EmployeeSidebar({ className }: { className?: string }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { isEnabled } = useFeatureFlags();
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
   const clearAuth = useAuthStore((s) => s.clearAuth);
@@ -244,6 +269,27 @@ export function EmployeeSidebar({ className }: { className?: string }) {
           <FileStack className="size-4 shrink-0 opacity-80" />
           Document center
         </Link>
+
+        {FEATURE_LINKS.filter((l) => isEnabled(l.flag)).map((link) => {
+          const Icon = link.icon;
+          const active =
+            pathname === link.href || pathname.startsWith(`${link.href}/`);
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                "flex items-center gap-2 rounded-lg px-3 py-2 font-medium transition-colors",
+                active
+                  ? "bg-[var(--brand-500)]/12 text-[var(--brand-500)]"
+                  : "text-foreground hover:bg-muted/60"
+              )}
+            >
+              <Icon className="size-4 shrink-0 opacity-80" />
+              {link.label}
+            </Link>
+          );
+        })}
 
         {GROUPS.map((group) => {
           const Icon = group.icon;

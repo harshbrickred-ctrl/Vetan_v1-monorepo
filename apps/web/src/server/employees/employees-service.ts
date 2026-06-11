@@ -112,6 +112,7 @@ function buildEmployeeListWhere(
     ...(query.status !== undefined ? { status: query.status } : {}),
     ...(query.departmentId ? { departmentId: query.departmentId } : {}),
     ...(query.designationId ? { designationId: query.designationId } : {}),
+    ...(query.employmentType ? { employmentType: query.employmentType } : {}),
     ...(query.dateOfJoiningFrom || query.dateOfJoiningTo
       ? {
           dateOfJoining: {
@@ -276,6 +277,23 @@ async function assertDesignation(tenantId: string, designationId: string) {
   });
   if (!d) {
     throw new BadRequestError("Invalid designationId for this workspace");
+  }
+}
+
+async function assertManager(
+  tenantId: string,
+  employeeId: string,
+  managerId: string | null | undefined,
+) {
+  if (managerId === undefined || managerId === null) return;
+  if (managerId === employeeId) {
+    throw new BadRequestError("Employee cannot be their own manager");
+  }
+  const manager = await prisma.employee.findFirst({
+    where: { id: managerId, tenantId, deletedAt: null },
+  });
+  if (!manager) {
+    throw new BadRequestError("Invalid managerId for this workspace");
   }
 }
 
@@ -461,6 +479,9 @@ export async function update(
   if (dto.designationId !== undefined && dto.designationId !== null) {
     await assertDesignation(tenantId, dto.designationId);
   }
+  if (dto.managerId !== undefined) {
+    await assertManager(tenantId, id, dto.managerId);
+  }
 
   if (dto.email !== undefined) {
     const emailNorm = dto.email.toLowerCase().trim();
@@ -510,6 +531,7 @@ export async function update(
   }
   if (dto.departmentId !== undefined) data.departmentId = dto.departmentId;
   if (dto.designationId !== undefined) data.designationId = dto.designationId;
+  if (dto.managerId !== undefined) data.managerId = dto.managerId;
   if (dto.status !== undefined) data.status = dto.status;
   if (dto.ctcAnnual !== undefined) {
     data.ctcAnnual =

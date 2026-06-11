@@ -13,7 +13,9 @@ import {
   fetchMePayslips,
   type MePayslipDetail,
 } from "@/lib/api/employee-portal";
+import { fetchMeReimbursements } from "@/lib/api/feature-modules";
 import { useAuthStore } from "@/lib/auth/auth-store";
+import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
 import { cn } from "@/lib/utils";
 
 function formatInrDetailed(amount: number): string {
@@ -92,8 +94,19 @@ function PayslipTable({
 
 export default function EmployeePayslipsPage() {
   const token = useAuthStore((s) => s.token);
+  const { isEnabled } = useFeatureFlags();
+  const reimbEnabled = isEnabled("reimbursements");
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [payslipTab, setPayslipTab] = useState<"payslip" | "reimb">("payslip");
+
+  const reimbQuery = useQuery({
+    queryKey: ["me-reimbursements", token],
+    queryFn: () =>
+      fetchMeReimbursements(token!) as Promise<
+        Array<{ category: string; amount: number; status: string; createdAt: string }>
+      >,
+    enabled: !!token && reimbEnabled && payslipTab === "reimb",
+  });
 
   const payslipsQuery = useQuery({
     queryKey: ["me", "payslips", token],
@@ -187,17 +200,48 @@ export default function EmployeePayslipsPage() {
         >
           Payslip
         </button>
-        <button
-          type="button"
-          disabled
-          title="Coming soon"
-          className="cursor-not-allowed rounded-md px-4 py-2 text-sm font-medium text-muted-foreground opacity-60"
-        >
-          Reimb. payslip
-        </button>
+        {reimbEnabled ? (
+          <button
+            type="button"
+            className={cn(
+              "rounded-md px-4 py-2 text-sm font-medium transition-colors",
+              payslipTab === "reimb"
+                ? "bg-[var(--brand-500)] text-white"
+                : "text-muted-foreground hover:bg-muted/50"
+            )}
+            onClick={() => setPayslipTab("reimb")}
+          >
+            Reimb. payslip
+          </button>
+        ) : null}
       </div>
 
-      {payslipTab === "reimb" ? null : payslipsQuery.isLoading ? (
+      {payslipTab === "reimb" ? (
+        reimbQuery.isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading reimbursements…</p>
+        ) : (
+          <div className="overflow-hidden rounded-lg border border-border">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/30">
+                <tr>
+                  <th className="px-3 py-2 text-left">Category</th>
+                  <th className="px-3 py-2 text-left">Amount</th>
+                  <th className="px-3 py-2 text-left">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(reimbQuery.data ?? []).map((r, i) => (
+                  <tr key={i} className="border-t border-border/60">
+                    <td className="px-3 py-2">{r.category}</td>
+                    <td className="px-3 py-2">{formatInrDetailed(r.amount)}</td>
+                    <td className="px-3 py-2">{r.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      ) : payslipsQuery.isLoading ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" />
           Loading payslips…

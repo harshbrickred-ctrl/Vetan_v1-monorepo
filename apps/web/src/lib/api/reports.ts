@@ -79,3 +79,42 @@ export function downloadCsv(filename: string, csv: string) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+export async function exportReportXlsx(
+  token: string,
+  reportId: string,
+  filters: Record<string, string | number>,
+): Promise<void> {
+  const { getApiBaseUrl } = await import("./client");
+  const base = getApiBaseUrl();
+  const res = await fetch(`${base}/v1/reports/run`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    credentials: "include",
+    body: JSON.stringify({ reportId, filters, format: "xlsx" }),
+  });
+  if (!res.ok) {
+    let message = "Export failed";
+    try {
+      const json = (await res.json()) as Record<string, unknown>;
+      const err = json?.error as Record<string, unknown> | undefined;
+      if (typeof err?.message === "string") message = err.message;
+    } catch {
+      /* binary error body */
+    }
+    throw new Error(message);
+  }
+  const blob = await res.blob();
+  const disposition = res.headers.get("Content-Disposition") ?? "";
+  const match = disposition.match(/filename="([^"]+)"/);
+  const filename = match?.[1] ?? `vetan-report-${Date.now()}.xlsx`;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}

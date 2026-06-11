@@ -7,12 +7,17 @@ import {
   ClipboardList,
   CreditCard,
   FileBarChart,
+  FileText,
+  GitBranch,
   IdCard,
   KeyRound,
   LayoutDashboard,
   Leaf,
+  LifeBuoy,
   LogOut,
+  Megaphone,
   Network,
+  Package,
   PanelLeftClose,
   PanelLeftOpen,
   Palette,
@@ -20,6 +25,7 @@ import {
   Settings,
   UserRound,
   Users,
+  Wallet,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -31,7 +37,9 @@ import { useAuthStore } from "@/lib/auth/auth-store";
 import { logout } from "@/lib/auth/auth-service";
 import { fetchIdCardPortalLaunchUrl } from "@/lib/api/id-card-portal";
 import { ApiError } from "@/lib/api/client";
+import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
 import { usePermissions } from "@/lib/hooks/use-permissions";
+import type { FeatureFlagKey } from "@/lib/feature-flags";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +48,7 @@ type NavItem = {
   label: string;
   icon: typeof LayoutDashboard;
   perm?: (typeof Permission)[keyof typeof Permission];
+  featureFlag?: FeatureFlagKey;
 };
 
 const main: NavItem[] = [
@@ -72,7 +81,94 @@ const main: NavItem[] = [
 const finances: NavItem[] = [
   { href: "/billing", label: "Billing", icon: CreditCard, perm: Permission["billing:read"] },
   { href: "/payroll", label: "Payroll", icon: ClipboardList, perm: Permission["payroll:read"] },
+  {
+    href: "/employees/contractors",
+    label: "Contractors",
+    icon: Users,
+    perm: Permission["payroll:read"],
+    featureFlag: "contractorPayroll",
+  },
   { href: "/reports", label: "Reports", icon: FileBarChart, perm: Permission["reports:read"] },
+];
+
+const featureModules: NavItem[] = [
+  {
+    href: "/organization/org-chart",
+    label: "Org chart",
+    icon: GitBranch,
+    perm: Permission["employees:read"],
+    featureFlag: "orgChart",
+  },
+  {
+    href: "/settings/lifecycle",
+    label: "Lifecycle",
+    icon: Users,
+    perm: Permission["employees:write"],
+    featureFlag: "employeeLifecycle",
+  },
+  {
+    href: "/settings/document-expiry",
+    label: "Doc expiry",
+    icon: FileText,
+    perm: Permission["employees:read"],
+    featureFlag: "documentExpiry",
+  },
+  {
+    href: "/settings/policies",
+    label: "Policies",
+    icon: ScrollText,
+    perm: Permission["settings:read"],
+    featureFlag: "policyLibrary",
+  },
+  {
+    href: "/settings/shifts",
+    label: "Shifts",
+    icon: CalendarDays,
+    perm: Permission["settings:read"],
+    featureFlag: "shifts",
+  },
+  {
+    href: "/settings/legal-entities",
+    label: "Legal entities",
+    icon: Building2,
+    perm: Permission["settings:read"],
+    featureFlag: "multiEntity",
+  },
+  {
+    href: "/settings/announcements",
+    label: "Announcements",
+    icon: Megaphone,
+    perm: Permission["settings:write"],
+    featureFlag: "announcements",
+  },
+  {
+    href: "/settings/helpdesk",
+    label: "Helpdesk",
+    icon: LifeBuoy,
+    perm: Permission["settings:read"],
+    featureFlag: "helpdesk",
+  },
+  {
+    href: "/settings/training",
+    label: "Training",
+    icon: ClipboardList,
+    perm: Permission["settings:read"],
+    featureFlag: "training",
+  },
+  {
+    href: "/settings/assets",
+    label: "Assets",
+    icon: Package,
+    perm: Permission["settings:read"],
+    featureFlag: "assets",
+  },
+  {
+    href: "/payroll/reimbursements",
+    label: "Reimbursements",
+    icon: Wallet,
+    perm: Permission["payroll:read"],
+    featureFlag: "reimbursements",
+  },
 ];
 
 const settings: NavItem[] = [
@@ -128,8 +224,13 @@ function NavSection({
 }) {
   const pathname = usePathname();
   const { hasPermission } = usePermissions();
+  const { isEnabled } = useFeatureFlags();
 
-  const visible = items.filter((i) => !i.perm || hasPermission(i.perm));
+  const visible = items.filter((i) => {
+    if (i.perm && !hasPermission(i.perm)) return false;
+    if (i.featureFlag && !isEnabled(i.featureFlag)) return false;
+    return true;
+  });
   if (visible.length === 0) return null;
 
   return (
@@ -226,6 +327,7 @@ export function Sidebar({ className }: { className?: string }) {
           <IdCardPortalLink collapsed={sidebarCollapsed} />
         </div>
         <NavSection title="Finances" items={finances} collapsed={sidebarCollapsed} />
+        <NavSection title="Modules" items={featureModules} collapsed={sidebarCollapsed} />
         <NavSection title="Settings" items={settings} collapsed={sidebarCollapsed} />
       </nav>
 

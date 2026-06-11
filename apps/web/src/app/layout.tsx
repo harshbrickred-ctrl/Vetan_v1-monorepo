@@ -13,6 +13,14 @@ const jetbrains = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Vetan — Payroll Management",
   description: "Multi-tenant payroll management for growing teams in India and beyond.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Vetan",
+  },
+  applicationName: "Vetan",
+  themeColor: "#6366f1",
 };
 
 export default function RootLayout({

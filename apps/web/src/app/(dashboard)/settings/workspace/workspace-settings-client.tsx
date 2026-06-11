@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { BankSalaryFields } from "@/components/employees/bank-salary-fields";
+import { FeatureFlagsPanel } from "@/components/settings/feature-flags-panel";
 import { NotificationSettingsPanel } from "@/components/settings/notification-settings-panel";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,6 +27,7 @@ import { changeAuthPassword, fetchSessionUser, patchAuthProfile } from "@/lib/au
 import { useAuthStore } from "@/lib/auth/auth-store";
 import { type SalaryPaymentMethod } from "@/lib/banking/payment-methods";
 import { usePermissions } from "@/lib/hooks/use-permissions";
+import { readFeatureFlagsFromTenantSettings, type FeatureFlagsMap } from "@/lib/feature-flags";
 import { cn } from "@/lib/utils";
 
 const TAB_KEYS = [
@@ -111,6 +113,7 @@ export function WorkspaceSettingsClient() {
   const [doc, setDoc] = useState<Record<string, string>>({});
   const [saas, setSaas] = useState<Record<string, string>>({});
   const [saasBool, setSaasBool] = useState({ apiAccess: false, auditLogsEnabled: false });
+  const [featureFlagsMap, setFeatureFlagsMap] = useState<FeatureFlagsMap>({});
   const [featureFlagsJson, setFeatureFlagsJson] = useState("{}");
   const [bank, setBank] = useState({
     bankName: "",
@@ -205,8 +208,13 @@ export function WorkspaceSettingsClient() {
       apiAccess: bool(z.apiAccess) ?? false,
       auditLogsEnabled: bool(z.auditLogsEnabled) ?? false,
     });
+    const ff =
+      z.featureFlags && typeof z.featureFlags === "object" && !Array.isArray(z.featureFlags)
+        ? readFeatureFlagsFromTenantSettings({ saasTenant: { featureFlags: z.featureFlags } })
+        : readFeatureFlagsFromTenantSettings(t.settings);
+    setFeatureFlagsMap(ff);
     try {
-      setFeatureFlagsJson(JSON.stringify(z.featureFlags && typeof z.featureFlags === "object" ? z.featureFlags : {}, null, 2));
+      setFeatureFlagsJson(JSON.stringify(ff, null, 2));
     } catch {
       setFeatureFlagsJson("{}");
     }
@@ -317,24 +325,12 @@ export function WorkspaceSettingsClient() {
   const subscription = tenantQuery.data?.subscription;
   const tenantId = tenantQuery.data?.id;
 
-  const parseFlags = (): Record<string, unknown> => {
-    const raw = featureFlagsJson.trim() || "{}";
-    return JSON.parse(raw) as Record<string, unknown>;
-  };
-
   const saveSaas = () => {
-    let flags: Record<string, unknown>;
-    try {
-      flags = parseFlags();
-    } catch {
-      toast.error("Feature flags must be valid JSON.");
-      return;
-    }
     saveSection.mutate({
       saasTenant: {
         ...saas,
         ...saasBool,
-        featureFlags: flags,
+        featureFlags: featureFlagsMap,
       },
     });
   };
@@ -758,12 +754,13 @@ export function WorkspaceSettingsClient() {
                 />
               </div>
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="saas-ff">Feature flags (JSON object)</Label>
-                <textarea
-                  id="saas-ff"
-                  className={cn(textareaClass, "min-h-[120px] font-mono text-xs")}
-                  value={featureFlagsJson}
-                  onChange={(e) => setFeatureFlagsJson(e.target.value)}
+                <Label>Feature modules</Label>
+                <FeatureFlagsPanel
+                  flags={featureFlagsMap}
+                  onChange={(next) => {
+                    setFeatureFlagsMap(next);
+                    setFeatureFlagsJson(JSON.stringify(next, null, 2));
+                  }}
                   disabled={!canWrite}
                 />
               </div>

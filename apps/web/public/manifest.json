@@ -1,0 +1,17 @@
+{
+  "name": "Vetan",
+  "short_name": "Vetan",
+  "description": "Payroll and HR self-service for your team",
+  "start_url": "/employee/dashboard",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 import { prisma } from "@sangam/db";
 import { BadRequestError, NotFoundError } from "@sangam/api-kit";
 import type { Reports } from "@sangam/contracts";
+import * as XLSX from "xlsx";
 import { getReportDefinition, REPORT_CATALOG } from "./reports-catalog";
 
 /**
@@ -31,13 +32,46 @@ export function catalog() {
   return { reports: REPORT_CATALOG };
 }
 
+export function resultToXlsxBuffer(result: ReportResult): Buffer {
+  const keys = result.columns.map((c) => c.key);
+  const headerRow = result.columns.map((c) => c.label);
+  const dataRows = result.rows.map((row) =>
+    keys.map((k) => {
+      const v = row[k];
+      return v == null ? "" : v;
+    }),
+  );
+  const sheet = XLSX.utils.aoa_to_sheet([headerRow, ...dataRows]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, sheet, "Report");
+  return Buffer.from(XLSX.write(wb, { type: "buffer", bookType: "xlsx" }));
+}
+
 export async function run(
   tenantId: string,
   dto: Reports.RunReportDto,
-): Promise<ReportResult> {
+): Promise<ReportResult | { format: "xlsx"; buffer: Buffer; filename: string }> {
   const def = getReportDefinition(dto.reportId);
   if (!def) throw new NotFoundError("Report not found");
 
+  const result = await executeReport(tenantId, dto);
+
+  if (dto.format === "xlsx") {
+    const safe = result.name.replace(/[^\w]+/g, "-").toLowerCase();
+    return {
+      format: "xlsx",
+      buffer: resultToXlsxBuffer(result),
+      filename: `vetan-${safe}-${Date.now()}.xlsx`,
+    };
+  }
+
+  return result;
+}
+
+async function executeReport(
+  tenantId: string,
+  dto: Reports.RunReportDto,
+): Promise<ReportResult> {
   switch (dto.reportId) {
     case "payroll_register":
       return payrollRegister(tenantId, dto.filters);
@@ -57,6 +91,7 @@ export async function run(
       throw new BadRequestError("Unsupported report");
   }
 }
+
 
 function periodFromFilters(filters: Record<string, string | number>) {
   const periodYear = Number(filters.periodYear);

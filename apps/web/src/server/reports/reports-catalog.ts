@@ -103,6 +103,28 @@ export const REPORT_CATALOG: ReportDefinition[] = [
       },
     ],
   },
+  {
+    id: "pf_ecr_export",
+    name: "PF ECR export",
+    description:
+      "Employee-wise PF wages and contribution columns for ECR upload format.",
+    category: "statutory",
+    filters: [
+      { key: "periodYear", label: "Year", type: "year", required: true },
+      { key: "periodMonth", label: "Month", type: "month", required: true },
+    ],
+  },
+  {
+    id: "esi_contribution_export",
+    name: "ESI contribution export",
+    description:
+      "Gross wages and ESI employee/employer splits for the selected payroll period.",
+    category: "statutory",
+    filters: [
+      { key: "periodYear", label: "Year", type: "year", required: true },
+      { key: "periodMonth", label: "Month", type: "month", required: true },
+    ],
+  },
 ];
 
 export function getReportDefinition(id: string): ReportDefinition | undefined {

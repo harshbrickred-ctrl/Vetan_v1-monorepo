@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { ApiError } from "@/lib/api/client";
 import {
   downloadCsv,
+  exportReportXlsx,
   fetchReportsCatalog,
   reportResultToCsv,
   runReport,
@@ -28,6 +29,7 @@ import {
   type ReportResult,
 } from "@/lib/api/reports";
 import { useAuthStore } from "@/lib/auth/auth-store";
+import { useFeatureFlags } from "@/lib/hooks/use-feature-flags";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/utils/formatters";
 
@@ -70,6 +72,8 @@ function formatCell(value: string | number | null, key: string): string {
 
 export default function ReportsPage() {
   const token = useAuthStore((s) => s.token);
+  const { isEnabled: isFlagEnabled } = useFeatureFlags();
+  const exportEnabled = isFlagEnabled("reportExport");
   const catalogQuery = useQuery({
     queryKey: ["reports", "catalog", token],
     queryFn: () => fetchReportsCatalog(token!),
@@ -121,6 +125,16 @@ export default function ReportsPage() {
     if (!result) return;
     const safe = result.name.replace(/[^\w]+/g, "-").toLowerCase();
     downloadCsv(`vetan-${safe}-${Date.now()}.csv`, reportResultToCsv(result));
+  }
+
+  async function exportXlsx() {
+    if (!selected || !token) return;
+    try {
+      await exportReportXlsx(token, selected.id, filters);
+      toast.success("Excel file downloaded");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Export failed");
+    }
   }
 
   return (
@@ -258,10 +272,23 @@ export default function ReportsPage() {
                       )}
                     </Button>
                     {result ? (
-                      <Button type="button" variant="outline" className="gap-1" onClick={exportCsv}>
-                        <Download className="size-4" />
-                        Export CSV
-                      </Button>
+                      <>
+                        <Button type="button" variant="outline" className="gap-1" onClick={exportCsv}>
+                          <Download className="size-4" />
+                          Export CSV
+                        </Button>
+                        {exportEnabled ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="gap-1"
+                            onClick={() => void exportXlsx()}
+                          >
+                            <FileSpreadsheet className="size-4" />
+                            Export Excel
+                          </Button>
+                        ) : null}
+                      </>
                     ) : null}
                   </div>
                 </GlassCard>

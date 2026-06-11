@@ -15,6 +15,8 @@ export type VisitorRow = {
   visitToName: string;
   visitToEmployeeId: string | null;
   visitedAt: string;
+  checkedOutAt: string | null;
+  hostNotifiedAt: string | null;
   hasPhoto: boolean;
   photoMimeType: string | null;
   registeredByEmployeeId: string;
@@ -52,6 +54,8 @@ function mapVisitor(row: {
   visitToName: string;
   visitToEmployeeId: string | null;
   visitedAt: Date;
+  checkedOutAt: Date | null;
+  hostNotifiedAt: Date | null;
   photoStoredFilename: string | null;
   photoMimeType: string | null;
   registeredByEmployeeId: string;
@@ -70,6 +74,8 @@ function mapVisitor(row: {
     visitToName: row.visitToName,
     visitToEmployeeId: row.visitToEmployeeId,
     visitedAt: row.visitedAt.toISOString(),
+    checkedOutAt: row.checkedOutAt?.toISOString() ?? null,
+    hostNotifiedAt: row.hostNotifiedAt?.toISOString() ?? null,
     hasPhoto: !!row.photoStoredFilename,
     photoMimeType: row.photoMimeType,
     registeredByEmployeeId: row.registeredByEmployeeId,
@@ -259,4 +265,35 @@ export async function resolvePhotoDownload(
     fileName,
     redirectUrl: meta.url,
   };
+}
+
+export async function checkOutVisitor(tenantId: string, visitorId: string) {
+  const row = await prisma.visitorRecord.findFirst({
+    where: { id: visitorId, tenantId },
+    include: { registeredBy: { select: employeeBriefSelect } },
+  });
+  if (!row) throw new NotFoundError("Visitor not found");
+  if (row.checkedOutAt) {
+    return mapVisitor(row);
+  }
+  const updated = await prisma.visitorRecord.update({
+    where: { id: visitorId },
+    data: { checkedOutAt: new Date() },
+    include: { registeredBy: { select: employeeBriefSelect } },
+  });
+  return mapVisitor(updated);
+}
+
+export async function notifyHost(tenantId: string, visitorId: string) {
+  const row = await prisma.visitorRecord.findFirst({
+    where: { id: visitorId, tenantId },
+    include: { registeredBy: { select: employeeBriefSelect } },
+  });
+  if (!row) throw new NotFoundError("Visitor not found");
+  const updated = await prisma.visitorRecord.update({
+    where: { id: visitorId },
+    data: { hostNotifiedAt: new Date() },
+    include: { registeredBy: { select: employeeBriefSelect } },
+  });
+  return mapVisitor(updated);
 }

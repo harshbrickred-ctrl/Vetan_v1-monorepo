@@ -1,10 +1,14 @@
+import sgMail from "@sendgrid/mail";
+import { randomUUID } from "crypto";
 import { prisma } from "@sangam/db";
 import { isDemoMode } from "./demo-mode";
 
 /**
  * Email provider — pluggable. In demo mode, inserts into MockEmail so the
  * /platform/inbox UI surfaces every "sent" mail (OTPs, password resets, invites).
- * In production, swap `realEmailProvider` for SendGrid / Resend.
+ *
+ * When `DEMO_MODE=false` and `SENDGRID_API_KEY` is set, messages are sent via
+ * SendGrid instead.
  */
 
 export type EmailMessage = {
@@ -20,6 +24,12 @@ export type EmailMessage = {
 
 export interface EmailProvider {
   send(msg: EmailMessage): Promise<{ id: string }>;
+}
+
+export function isSendGridConfigured(): boolean {
+  if (isDemoMode()) return false;
+  const key = process.env.SENDGRID_API_KEY;
+  return Boolean(key && !key.includes("placeholder"));
 }
 
 const mockProvider: EmailProvider = {
@@ -44,12 +54,26 @@ const mockProvider: EmailProvider = {
   },
 };
 
-const realProvider: EmailProvider = {
-  async send() {
-    throw new Error(
-      "Real email provider not wired yet. Set DEMO_MODE=true or implement SendGrid client.",
-    );
+const sendGridProvider: EmailProvider = {
+  async send(msg) {
+    const apiKey = process.env.SENDGRID_API_KEY;
+    if (!apiKey) {
+      throw new Error("SENDGRID_API_KEY is not configured");
+    }
+    sgMail.setApiKey(apiKey);
+    const from =
+      msg.from ?? process.env.EMAIL_FROM ?? "no-reply@sangam.local";
+    const [response] = await sgMail.send({
+      to: msg.to,
+      from,
+      subject: msg.subject,
+      text: msg.body,
+    });
+    const messageId =
+      (response.headers["x-message-id"] as string | undefined) ?? randomUUID();
+    return { id: messageId };
   },
 };
 
-export const email: EmailProvider = isDemoMode() ? mockProvider : realProvider;
+export const email: EmailProvider =
+  isDemoMode() || !isSendGridConfigured() ? mockProvider : sendGridProvider;

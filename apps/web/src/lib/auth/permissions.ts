@@ -5,8 +5,12 @@ export const Permission = {
   "payroll:run": "payroll:run",
   "payroll:approve": "payroll:approve",
   "leave:read": "leave:read",
+  "leave:write": "leave:write",
   "leave:approve": "leave:approve",
   "reports:read": "reports:read",
+  "reports:write": "reports:write",
+  "team:read": "team:read",
+  "team:approve_leave": "team:approve_leave",
   "settings:read": "settings:read",
   "settings:write": "settings:write",
   "billing:read": "billing:read",
@@ -25,6 +29,14 @@ export type PermissionKey = (typeof Permission)[keyof typeof Permission];
 /** Admin has full tenant access; employees use /v1/me/* (no tenant permissions). */
 const rolePermissions: Record<string, PermissionKey[]> = {
   admin: Object.values(Permission),
+  manager: [
+    Permission["team:read"],
+    Permission["team:approve_leave"],
+    Permission["leave:read"],
+    Permission["leave:approve"],
+    Permission["attendance:read"],
+    Permission["employees:read"],
+  ],
   employee: [],
 };
 

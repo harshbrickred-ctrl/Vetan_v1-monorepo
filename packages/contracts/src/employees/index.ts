@@ -18,6 +18,13 @@ const EMPLOYMENT_STATUS = [
   "INACTIVE",
 ] as const;
 
+const EMPLOYMENT_TYPES = [
+  "FULL_TIME",
+  "PART_TIME",
+  "CONTRACTOR",
+  "INTERN",
+] as const;
+
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]$/i;
@@ -70,6 +77,7 @@ export const UpdateEmployeeSchema = z.object({
   dateOfJoining: optional(isoDate),
   departmentId: optional(z.union([z.string().uuid(), z.null()])),
   designationId: optional(z.union([z.string().uuid(), z.null()])),
+  managerId: optional(z.union([z.string().uuid(), z.null()])),
   status: optional(z.enum(EMPLOYMENT_STATUS)),
   ctcAnnual: optional(z.union([z.coerce.number().min(0), z.null()])),
   pan: optional(
@@ -115,6 +123,7 @@ export const ListEmployeesQuerySchema = z.object({
   designationId: optional(z.string().uuid()),
   dateOfJoiningFrom: optional(isoDate),
   dateOfJoiningTo: optional(isoDate),
+  employmentType: optional(z.enum(EMPLOYMENT_TYPES)),
 });
 export type ListEmployeesQueryDto = z.infer<typeof ListEmployeesQuerySchema>;
 
