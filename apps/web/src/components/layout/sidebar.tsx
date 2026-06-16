@@ -10,6 +10,7 @@ import {
   FileText,
   GitBranch,
   IdCard,
+  Headphones,
   KeyRound,
   LayoutDashboard,
   Leaf,
@@ -77,6 +78,7 @@ const main: NavItem[] = [
   { href: "/leave", label: "Leave", icon: Leaf, perm: Permission["leave:read"] },
   { href: "/tasks", label: "Tasks", icon: CheckSquare, perm: Permission["tasks:read"] },
   { href: "/visitors", label: "Visitors", icon: UserRound, perm: Permission["visitors:read"] },
+  { href: "/support", label: "Support", icon: Headphones },
 ];
 
 const finances: NavItem[] = [

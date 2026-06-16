@@ -12,6 +12,7 @@
 
 export * from "./permissions";
 export * from "./feature-flags";
+export * as PlatformSupport from "./platform-support";
 export * from "./envelope";
 export * as Auth from "./auth";
 export * as Tenant from "./tenant";

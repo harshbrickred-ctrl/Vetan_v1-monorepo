@@ -20,7 +20,7 @@ export default function EmployeeTrainingPage() {
   });
 
   return (
-    <FeatureGate flag="training" title="Training">
+    <FeatureGate flag="training" title="Training" audience="employee">
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">My training</h1>
         <GlassCard level={2} className="p-4">

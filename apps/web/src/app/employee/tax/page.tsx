@@ -34,7 +34,7 @@ export default function EmployeeTaxPage() {
   });
 
   return (
-    <FeatureGate flag="taxDeclarations" title="Tax declarations">
+    <FeatureGate flag="taxDeclarations" title="Tax declarations" audience="employee">
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Tax declaration — FY {year}</h1>
         <GlassCard level={2} className="space-y-4 p-4">

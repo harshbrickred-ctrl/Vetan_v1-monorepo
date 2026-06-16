@@ -37,7 +37,7 @@ export default function EmployeeHelpdeskPage() {
   });
 
   return (
-    <FeatureGate flag="helpdesk" title="Helpdesk">
+    <FeatureGate flag="helpdesk" title="Helpdesk" audience="employee">
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Helpdesk</h1>
         <GlassCard level={2} className="flex gap-2 p-4">

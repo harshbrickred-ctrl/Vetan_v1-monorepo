@@ -20,7 +20,7 @@ export default function EmployeeAnnouncementsPage() {
   });
 
   return (
-    <FeatureGate flag="announcements" title="Announcements">
+    <FeatureGate flag="announcements" title="Announcements" audience="employee">
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Announcements</h1>
         {(feedQuery.data ?? []).map((a) => (

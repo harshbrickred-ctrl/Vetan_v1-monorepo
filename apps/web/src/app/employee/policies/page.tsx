@@ -33,7 +33,7 @@ export default function EmployeePoliciesPage() {
   });
 
   return (
-    <FeatureGate flag="policyLibrary" title="Policies">
+    <FeatureGate flag="policyLibrary" title="Policies" audience="employee">
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Company policies</h1>
         {(listQuery.data ?? []).map((p) => (

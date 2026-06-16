@@ -29,7 +29,7 @@ export default function EmployeeDirectoryPage() {
   });
 
   return (
-    <FeatureGate flag="employeeDirectory" title="Employee directory">
+    <FeatureGate flag="employeeDirectory" title="Employee directory" audience="employee">
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Employee directory</h1>
         <Input

@@ -35,7 +35,7 @@ export default function EmployeeTeamPage() {
   }
 
   if (!enabled) {
-    return <FeatureUpgradeScreen title="My team" flag="managerRole" />;
+    return <FeatureUpgradeScreen title="My team" flag="managerRole" audience="employee" />;
   }
 
   return (
